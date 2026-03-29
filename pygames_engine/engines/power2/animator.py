@@ -1,0 +1,48 @@
+import time
+import math
+import pygame as pg
+
+
+class Animator:
+    def __init__(self, target, animation_speed=0.1):
+        self.target = target
+        self.animation_speed = animation_speed
+        self.current_frame = 0
+        self.last_update_time = time.time()
+        self.base_y = getattr(target, 'y', 0)
+        self.base_image = getattr(target, 'image', None)
+        # Bug fix: last_state was referenced before assignment in refresh()
+        self.last_state = getattr(target, 'state', None)
+
+    def refresh(self):
+        if not hasattr(self.target, 'animations') or not hasattr(self.target, 'state'):
+            return
+
+        state = self.target.state
+        if state not in self.target.animations:
+            return
+
+        # Bug fix: reset frame when state changes
+        if self.target.state != self.last_state:
+            self.current_frame = 0
+            self.last_state = self.target.state
+            self.last_update_time = time.time()
+
+        current_time = time.time()
+        if current_time - self.last_update_time > self.animation_speed:
+            frames = self.target.animations[state]
+            if not frames:
+                return
+            self.current_frame = (self.current_frame + 1) % len(frames)
+            self.target.image = frames[self.current_frame]
+            self.last_update_time = current_time
+
+    def hover(self, amplitude=5, speed=5):
+        self.target.y = self.base_y + math.sin(time.time() * speed) * amplitude
+
+    def rotate_loop(self, speed=100):
+        angle = (time.time() * speed) % 360
+        self.target.image = pg.transform.rotate(self.base_image, angle)
+
+    def set_speed(self, speed):
+        self.animation_speed = speed
