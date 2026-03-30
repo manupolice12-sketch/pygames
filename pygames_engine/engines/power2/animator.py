@@ -11,8 +11,8 @@ class Animator:
         self.last_update_time = time.time()
         self.base_y = getattr(target, 'y', 0)
         self.base_image = getattr(target, 'image', None)
-        # Bug fix: last_state was referenced before assignment in refresh()
         self.last_state = getattr(target, 'state', None)
+        self.base_image = target.image.copy()
 
     def refresh(self):
         if not hasattr(self.target, 'animations') or not hasattr(self.target, 'state'):
@@ -22,7 +22,6 @@ class Animator:
         if state not in self.target.animations:
             return
 
-        # Bug fix: reset frame when state changes
         if self.target.state != self.last_state:
             self.current_frame = 0
             self.last_state = self.target.state
@@ -38,7 +37,7 @@ class Animator:
             self.last_update_time = current_time
 
     def hover(self, amplitude=5, speed=5):
-        self.target.y = self.base_y + math.sin(time.time() * speed) * amplitude
+        self.target.rect.y = self.base_y + math.sin(time.time() * speed) * amplitude
 
     def rotate_loop(self, speed=100):
         angle = (time.time() * speed) % 360
