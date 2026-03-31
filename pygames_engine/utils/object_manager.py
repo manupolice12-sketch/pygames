@@ -42,7 +42,7 @@ class SSprites(sprite.Sprite):
         if alpha:
             surface = Surface((width, height), SRCALPHA)
         else:
-            surface = Surface((width,height))
+            surface = Surface((width,height).convert())
             surface = surface.convert_alpha()
             if color:
                 try:
