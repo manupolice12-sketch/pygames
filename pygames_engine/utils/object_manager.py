@@ -37,19 +37,6 @@ class SSprites(sprite.Sprite):
 
     def draw(self):
         self.pgs.screen.blit(self.image, self.rect)
-        
-    def create_surface(self, width,height, color=None, alpha=None):
-        if alpha:
-            surface = Surface((width, height), SRCALPHA)
-        else:
-            surface = Surface((width,height).convert())
-            surface = surface.convert_alpha()
-            if color:
-                try:
-                    surface.fill(color)
-                except (ValueError, TypeError):
-                    raise NameError(f"The color '{color}' does not exist, please check the color you typed.")
-        return surface
 
     def move(self, dx, dy):
         self.rect.x += dx

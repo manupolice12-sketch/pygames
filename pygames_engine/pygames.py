@@ -79,6 +79,19 @@ class Game:
         self.objects = [o for o in self.objects if in_bounds(o)]
         self.solids  = [o for o in self.solids  if in_bounds(o)]
 
+    def create_surface(self, width,height, color=None, alpha=None):
+        if alpha:
+            surface = Surface((width, height), SRCALPHA)
+        else:
+            surface = Surface((width,height).convert())
+            surface = surface.convert_alpha()
+            if color:
+                try:
+                    surface.fill(color)
+                except (ValueError, TypeError):
+                    raise NameError(f"The color '{color}' does not exist, please check the color you typed.")
+        return surface
+
     def background(self, color):
         self.screen.fill(color)    
 
