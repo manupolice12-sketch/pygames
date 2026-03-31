@@ -73,7 +73,7 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 | `game.set_speed(fps)` | Set target FPS (default 60) |
 | `game.zoom(factor)` | Resize the window by a multiplier |
 | `game.mainloop(logic)` | Start the game loop |
-
+| `game.create_surface(width, height, color, alpha)` | Create a surface |
 ---
 
 ## Base Sprite — `SSprites`
