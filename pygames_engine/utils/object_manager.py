@@ -27,8 +27,7 @@ class SSprites(sprite.Sprite):
             except:
                 self. raise_file_not_found_error(image_path)
         else:
-            self.image = Surface((50, 50))
-            self.image.fill("white")
+            self.image = self.pgs.create_surface(50, 50, color="white")
 
         self.rect = self.image.get_rect(topleft=(x, y))
 
