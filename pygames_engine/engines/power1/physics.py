@@ -4,7 +4,6 @@ except ImportError:
     raise ImportError("pygame or pygame-ce is required. Install it with: pip install pygame-ce")
 from ...utils.object_manager import SSprites
 
-
 class PhysicSprite(SSprites):
     """A sprite class that extends SSprites and incorporates basic physics properties and behaviors, such as gravity and 
     collision detection."""
