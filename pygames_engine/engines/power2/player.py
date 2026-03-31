@@ -17,6 +17,8 @@ class Player(PhysicSprite):
         self.key_jump = jump
 
     def handle_input(self):
+        """Handle player input for movement and jumping left and right movement based on the arror keys and jumping based on
+        the assigned space key"""
         if self.pgs.check_key_pressed(self.key_left):
             self.vel_x = -self.speed
         elif self.pgs.check_key_pressed(self.key_right):
