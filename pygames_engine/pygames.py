@@ -81,7 +81,7 @@ class Game:
 
     def create_surface(self, width,height, color=None, alpha=None):
         if alpha:
-            surface = Surface((width, height), SRCALPHA)
+            surface = Surface((width, height, SRCALPHA)).convert_alpha()
         else:
             surface = Surface((width,height).convert())
             surface = surface.convert_alpha()

@@ -11,11 +11,7 @@ class PhysicSprite(SSprites):
         super().__init__(app, x, y)
         if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
             raise TypeError(f"width and height must be numbers, got width={type(width).__name__}, height={type(height).__name__}")
-        self.image =    pg.Surface((width, height))
-        try:
-            self.image.fill(color)
-        except (ValueError, TypeError):
-            raise NameError(f"The color '{color}' does not exist, please check the color you typed.")
+        self.image = app.create_surface(width, height, color=color)
         self.rect = self.image.get_rect(topleft=(x, y))
         self.vel_y = 0
         self.vel_x = 0
