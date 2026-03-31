@@ -80,7 +80,7 @@ class Game:
         self.solids  = [o for o in self.solids  if in_bounds(o)]
 
     def background(self, color):
-        self.screen.fill(color)
+        self.screen.fill(color)    
 
     def start_loop(self):
         self.clean_up()
