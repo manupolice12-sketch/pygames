@@ -13,7 +13,7 @@ pip install pygames-simplified
 ### Importing
 
 ```python
-from pygames.advanced import *   # Physics + Player (recommended)
+from pygames.advanced import *   # Physics + Player + Animator(recommended)
 from pygames.medium import *     # Physics only (no player input)
 ```
 
@@ -47,7 +47,7 @@ game.mainloop(logic)
 | Import | What you get |
 |---|---|
 | `from pygames.medium import *` | Core engine + physics (no player input) |
-| `from pygames.advanced import *` | Core engine + physics + controllable player+animator |
+| `from pygames.advanced import *` | Core engine + physics + controllable player + Animator |
 
 ---
 
@@ -180,17 +180,6 @@ draw.rect(game.screen, "red", (100, 100, 50, 50))
 | `TypeError` | Wrong type passed to width, height, speed, or jump force |
 | `ValueError` | Negative speed value |
 | `NameError` | Invalid colour name or missing sound |
-
----
-
-## Migrating from v1.x
-
-The main window class was renamed in v2.0.0:
-
-| v1.x | v2.0.0 |
-|---|---|
-| `pygames(800, 600, "Title")` | `Game(800, 600, "Title")` |
-| `PhysicSprite.start(solids)` | `PhysicSprite.apply_physics(solids)` |
 
 ---
 
