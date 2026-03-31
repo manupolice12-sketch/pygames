@@ -4,6 +4,8 @@ import pygame as pg
 
 
 class Animator:
+    """A class that manages sprite animations, allowing for frame updates based on the target sprite's state and providing
+       additional animation effects like hovering and rotating."""
     def __init__(self, target, animation_speed=0.1):
         self.target = target
         self.animation_speed = animation_speed

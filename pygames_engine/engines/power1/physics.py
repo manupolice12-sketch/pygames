@@ -6,6 +6,8 @@ from ...utils.object_manager import SSprites
 
 
 class PhysicSprite(SSprites):
+    """A sprite class that extends SSprites and incorporates basic physics properties and behaviors, such as gravity and 
+    collision detection."""
     def __init__(self, app, x, y, width=50, height=50, color="red"):
         super().__init__(app, x, y)
         if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):

@@ -2,6 +2,8 @@ from ..power1.physics import PhysicSprite
 from ...pygames import*
 
 class Player(PhysicSprite):
+    """A player class that extends PhysicSprite and incorporates player-specific properties and behaviors, 
+      such as movement controls and jumping mechanics."""
     def __init__(self, app, x, y, width=40, height=60, color="blue", speed=5,
                  left="left", right="right", jump="space"):
         super().__init__(app, x, y, width, height, color)

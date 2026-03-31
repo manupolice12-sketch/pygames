@@ -4,6 +4,7 @@ from .engines.power1.physics import *
 
 
 class Game:
+    """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
     def __init__(self, w=800, h=600, title="Pygame-S", icon_path=None):
         init()
         font.init()

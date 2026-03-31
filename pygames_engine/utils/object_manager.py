@@ -5,6 +5,7 @@ except ImportError:
 
 
 class SSprites(sprite.Sprite):
+    """Base class for sprites in the engine, providing basic functionality."""
     def __init__(self, pgs_instance, x, y, image_path=None, source=None):
         super().__init__()
         if not hasattr(pgs_instance, 'screen') or not hasattr(pgs_instance, 'objects'):
