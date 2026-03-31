@@ -1,5 +1,5 @@
 from ..power1.physics import PhysicSprite
-from ...pygames import*
+from ...pygames import Game
 
 class Player(PhysicSprite):
     """A player class that extends PhysicSprite and incorporates player-specific properties and behaviors, 

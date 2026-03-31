@@ -1,5 +1,6 @@
-from pygame import *
+from pygame import time, font, mixer, image, transform, display, event, key, init, quit
 import sys
+
 from .engines.power1.physics import *
 
 

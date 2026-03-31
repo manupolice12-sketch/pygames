@@ -1,5 +1,5 @@
 try:
-    from pygame import *
+    import pygame as pg 
 except ImportError:
     raise ImportError("pygame or pygame-ce is required. Install it with: pip install pygame-ce")
 from ...utils.object_manager import SSprites
@@ -11,7 +11,7 @@ class PhysicSprite(SSprites):
         super().__init__(app, x, y)
         if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
             raise TypeError(f"width and height must be numbers, got width={type(width).__name__}, height={type(height).__name__}")
-        self.image = Surface((width, height))
+        self.image =    pg.Surface((width, height))
         try:
             self.image.fill(color)
         except (ValueError, TypeError):
