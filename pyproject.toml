@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pygames-simplified"
+version = "2.0.0"
+description = "PyGame Simplified — A beginner-friendly wrapper around Pygame"
+readme = "README.md"
+requires-python = ">=3.7"
+dependencies = [
+    "pygame-ce>=2.0.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+    "Topic :: Games/Entertainment",
+    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
+]
+
+[project.urls]
+Source = "https://github.com/manupolice12-sketch/pygames"
+"Bug Tracker" = "https://github.com/manupolice12-sketch/pygames/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pygames*"]
