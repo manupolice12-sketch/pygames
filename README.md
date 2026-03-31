@@ -47,7 +47,7 @@ game.mainloop(logic)
 | Import | What you get |
 |---|---|
 | `from pygames.medium import *` | Core engine + physics (no player input) |
-| `from pygames.advanced import *` | Core engine + physics + controllable player |
+| `from pygames.advanced import *` | Core engine + physics + controllable player+animator |
 
 ---
 
@@ -133,7 +133,7 @@ Extends `PhysicSprite` with keyboard input. Key bindings are fully customisable.
 ## Animation — `Animator` (advanced)
 
 ```python
-from pygames_engine.engines.power2.animator import Animator
+from pygames.advanced import Animation
 
 anim = Animator(target, animation_speed=0.1)
 ```

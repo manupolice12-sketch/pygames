@@ -46,7 +46,7 @@ class Game:
         try:
             img = self.images.get(name)
             if img:
-                if w and h:
+                if w is not None and h is not None:
                     img = transform.scale(img, (w, h))
                 self.screen.blit(img, (x, y))
         except FileNotFoundError:
@@ -71,16 +71,13 @@ class Game:
         self.garbage_collection = True
 
     def clean_up(self):
-        if self.garbage_collection:
-            b = 150
-            self.objects = [
-                o for o in self.objects
-                if o.rect.right > -b and o.rect.left < self.screen_width + b and
-                   o.rect.bottom > -b and o.rect.top < self.screen_height + b
-            ]
-
-    def fill(self, color):
-        self.screen.fill(color)
+      if self.garbage_collection:
+        b = 150
+        def in_bounds(o):
+            return (o.rect.right > -b and o.rect.left < self.screen_width + b and
+                    o.rect.bottom > -b and o.rect.top < self.screen_height + b)
+        self.objects = [o for o in self.objects if in_bounds(o)]
+        self.solids  = [o for o in self.solids  if in_bounds(o)]
 
     def background(self, color):
         self.screen.fill(color)
@@ -152,4 +149,4 @@ class Game:
             self.start_loop()
             self.update_screen()
         quit()
-        sys.exit()
+        sys.exit() #This is to ensure the code exits completely, preventing any lingering processes.

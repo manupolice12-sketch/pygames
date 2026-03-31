@@ -1,5 +1,5 @@
 try:
-    from pygame import *
+    from pygame import*
 except ImportError:
     raise ImportError("pygame or pygame-ce is required. Install it with: pip install pygame or pip install pygame-ce")
 
@@ -18,20 +18,20 @@ class SSprites(sprite.Sprite):
             else:
                 try:
                     self.image = image.load(source).convert_alpha()
-                except:
-                    self.Error2(source)
+                except (FileNotFoundError, error):
+                    self. raise_file_not_found_error(source)
         elif image_path:
             try:
                 self.image = image.load(image_path).convert_alpha()
             except:
-                self.Error2(image_path)
+                self. raise_file_not_found_error(image_path)
         else:
             self.image = Surface((50, 50))
             self.image.fill("white")
 
         self.rect = self.image.get_rect(topleft=(x, y))
 
-    def Error2(self, name):
+    def  raise_file_not_found_error(self, name):
         raise FileNotFoundError(f"The file '{name}' does not exist, check the file.")
 
     def draw(self):

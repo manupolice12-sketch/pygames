@@ -23,36 +23,33 @@ class PhysicSprite(SSprites):
         self.on_ground = False
 
     def apply_physics(self, solids=None):
-        # Bug fix: renamed from start() to apply_physics() to avoid
-        # conflict with Game.start() and clarify its purpose
-        if solids is None:
-            solids = []
-        self.vel_y += self.gravity
-        if self.vel_y > self.max_fall_speed:
-            self.vel_y = self.max_fall_speed
-        self.rect.y += self.vel_y
-        self.on_ground = False
-        for solid in solids:
-            if self.rect.colliderect(solid.rect):
-                if self.vel_y > 0:
-                    self.rect.bottom = solid.rect.top
-                    self.vel_y = 0
-                    self.on_ground = True
-                elif self.vel_y < 0:
-                    self.rect.top = solid.rect.bottom
-                    self.vel_y = 0
-        self.rect.x += self.vel_x
-        for solid in solids:
-            if self.rect.colliderect(solid.rect):
-                if self.vel_x > 0:
-                    self.rect.right = solid.rect.left
-                elif self.vel_x < 0:
-                    self.rect.left = solid.rect.right
-                self.vel_x = 0
-        if self.rect.bottom > self.pgs.screen_height:
-            self.rect.bottom = self.pgs.screen_height
-            self.vel_y = 0
-            self.on_ground = True
+     if solids is None:
+        solids = []
+     self.vel_y += self.gravity
+     if self.vel_y > self.max_fall_speed:
+        self.vel_y = self.max_fall_speed
+     self.rect.y += self.vel_y
+     self.on_ground = False
+     for solid in solids:
+         if self.rect.colliderect(solid.rect):
+            if self.vel_y > 0:
+                self.rect.bottom = solid.rect.top
+                self.vel_y = 0
+                self.on_ground = True
+            elif self.vel_y < 0:
+                self.rect.top = solid.rect.bottom
+                self.vel_y = 0
+     self.rect.x += self.vel_x
+     for solid in solids:
+        if self.rect.colliderect(solid.rect):
+            if self.vel_x > 0:
+                self.rect.right = solid.rect.left
+            elif self.vel_x < 0:
+                self.rect.left = solid.rect.right
+     if self.rect.bottom > self.pgs.screen_height:
+        self.rect.bottom = self.pgs.screen_height
+        self.vel_y = 0
+        self.on_ground = True
 
     def jump(self, force=15):
         if not isinstance(force, (int, float)):

@@ -42,6 +42,7 @@ class Animator:
     def rotate_loop(self, speed=100):
         angle = (time.time() * speed) % 360
         self.target.image = pg.transform.rotate(self.base_image, angle)
+    
 
     def set_speed(self, speed):
         self.animation_speed = speed
