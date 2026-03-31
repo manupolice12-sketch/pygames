@@ -1,8 +1,6 @@
-from pygame import time, font, mixer, image, transform, display, event, key, init, quit
+from pygame import *
 import sys
-
 from .engines.power1.physics import *
-
 
 class Game:
     """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
