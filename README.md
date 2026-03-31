@@ -67,7 +67,7 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 | `game.score` | Set or update the score value |
 | `game.start_garbage_collecter()` | Auto-remove off-screen objects |
 | `game.load_image(name, path)` | Load an image by name |
-| `game.image(name, x, y, w, h)` | Draw a loaded image |
+| `game.img(name, x, y, w, h)` | Draw a loaded image |
 | `game.load_sound(name, path)` | Load a sound by name |
 | `game.play_sound(name)` | Play a loaded sound |
 | `game.set_speed(fps)` | Set target FPS (default 60) |
