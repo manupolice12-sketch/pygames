@@ -43,7 +43,7 @@ class Game:
         except FileNotFoundError:
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
-    def image(self, name, x, y, w=None, h=None):
+    def img(self, name, x, y, w=None, h=None):
         try:
             img = self.images.get(name)
             if img:
