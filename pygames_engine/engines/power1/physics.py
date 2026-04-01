@@ -19,15 +19,20 @@ class PhysicSprite(SSprites):
         self.max_fall_speed = 20
         self.on_ground = False
 
-    def apply_physics(self, solids=None):
+    def apply_physics(self, solids=None, gravity=True):
         """Apply physics to the sprite, including gravity and collision detection."""
         if solids is None:
             solids = []
-        self.vel_y += self.gravity
+        
+        if gravity:
+            self.vel_y += self.gravity
+            
         if self.vel_y > self.max_fall_speed:
             self.vel_y = self.max_fall_speed
+            
         self.rect.y += self.vel_y
         self.on_ground = False
+        
         for solid in solids:
             if self.rect.colliderect(solid.rect):
                 if self.vel_y > 0:
@@ -37,6 +42,7 @@ class PhysicSprite(SSprites):
                 elif self.vel_y < 0:
                     self.rect.top = solid.rect.bottom
                     self.vel_y = 0
+                    
         self.rect.x += self.vel_x
         for solid in solids:
             if self.rect.colliderect(solid.rect):
@@ -44,6 +50,7 @@ class PhysicSprite(SSprites):
                     self.rect.right = solid.rect.left
                 elif self.vel_x < 0:
                     self.rect.left = solid.rect.right
+                    
         if self.rect.bottom > self.pgs.screen_height:
             self.rect.bottom = self.pgs.screen_height
             self.vel_y = 0
