@@ -7,7 +7,7 @@ from ...utils.object_manager import SSprites
 class PhysicSprite(SSprites):
     """A sprite class that extends SSprites and incorporates basic physics properties and behaviors, such as gravity and 
     collision detection."""
-    def __init__(self, app, x, y, width=50, height=50, color="red"):
+    def __init__(self, app, x, y, width=50, height=50, color="red", gravity=0.8, max_fall_speed=20):
         super().__init__(app, x, y)
         if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
             raise TypeError(f"width and height must be numbers, got width={type(width).__name__}, height={type(height).__name__}")
@@ -15,8 +15,8 @@ class PhysicSprite(SSprites):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.vel_y = 0
         self.vel_x = 0
-        self.gravity = 0.8
-        self.max_fall_speed = 20
+        self.gravity = gravity
+        self.max_fall_speed = max_fall_speed
         self.on_ground = False
 
     def apply_physics(self, solids=None, gravity=True):

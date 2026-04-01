@@ -1,5 +1,6 @@
 from pygames.advanced import *
 from os import path
+import random
 
 base_dir = path.dirname(__file__)
 assets = path.join(base_dir, 'assets')
@@ -13,6 +14,7 @@ app.load_image("alien2", path.join(assets, "alien2.png"))
 app.load_image("player", path.join(assets, "player1.gif"))
 app.load_image("background", path.join(assets, "background.gif"))
 app.load_sound("boom", path.join(assets, "boom.wav"))
+app.load_image("bomb", path.join(assets, "bomb.gif"))
 
 player = Player(app, 225, 430, width=40, height=50, color="blue", speed=5)
 player.image = app.images["player"]
@@ -20,58 +22,69 @@ player.rect = player.image.get_rect(topleft=(225, 430))
 app.start(player)
 
 bullets = []
+bombs = []
 aliens = []
 
 ALIEN_ROWS = 2
 ALIEN_COLS = 5
 alien_dx = 2
-alien_move_down = False
 
 for row in range(ALIEN_ROWS):
     for col in range(ALIEN_COLS):
-        alien = PhysicSprite(app, 60 + col * 80, 40 + row * 60, width=40, height=40)
+        alien = PhysicSprite(app, 60 + col * 80, 40 + row * 60, width=40, height=40, gravity=0, max_fall_speed=0)
         alien.image = app.images["alien1"] if row % 2 == 0 else app.images["alien2"]
         alien.rect = alien.image.get_rect(topleft=(60 + col * 80, 40 + row * 60))
-        alien.gravity = 0
         aliens.append(alien)
-        app.start(alien)
 
 shoot_cooldown = 0
+bomb_cooldown = 0
 
 def game_logic():
-    global shoot_cooldown, alien_dx, alien_move_down
+    global shoot_cooldown, alien_dx, bomb_cooldown
 
     app.img("background", 0, 0, 500, 500)
 
     if app.check_key_pressed("space") and shoot_cooldown <= 0:
         bullet = PhysicSprite(app, player.rect.centerx - 4, player.rect.top - 10, width=8, height=16, color="yellow")
-        bullet.gravity = 0
-        bullet.vel_y = -10
         bullets.append(bullet)
-        app.start(bullet)
+        bullet.image = app.images["bomb"]
         shoot_cooldown = 20
 
     if shoot_cooldown > 0:
         shoot_cooldown -= 1
 
+    if bomb_cooldown <= 0 and aliens:
+        shooter = random.choice(aliens)
+        bomb = PhysicSprite(app, shooter.rect.centerx - 4, shooter.rect.bottom, width=8, height=16, color="red")
+        bombs.append(bomb)
+        bomb_cooldown = 60
+
+    if bomb_cooldown > 0:
+        bomb_cooldown -= 1
+
     for bullet in bullets[:]:
-        bullet.rect.y += bullet.vel_y
+        bullet.rect.y -= 10
+        app.screen.blit(bullet.image, bullet.rect)
         if bullet.rect.bottom < 0:
             bullets.remove(bullet)
-            if bullet in app.objects:
-                app.objects.remove(bullet)
             continue
         for alien in aliens[:]:
             if bullet.rect.colliderect(alien.rect):
                 app.play_sound("boom")
                 app.score += 10
                 aliens.remove(alien)
-                if alien in app.objects:
-                    app.objects.remove(alien)
                 bullets.remove(bullet)
-                if bullet in app.objects:
-                    app.objects.remove(bullet)
                 break
+
+    for bomb in bombs[:]:
+        bomb.rect.y += 6
+        app.screen.blit(bomb.image, bomb.rect)
+        if bomb.rect.top > 500:
+            bombs.remove(bomb)
+            continue
+        if bomb.rect.colliderect(player.rect):
+            app.score -= 5
+            bombs.remove(bomb)
 
     hit_edge = False
     for alien in aliens:
@@ -83,6 +96,9 @@ def game_logic():
         alien_dx *= -1
         for alien in aliens:
             alien.rect.y += 20
+
+    for alien in aliens:
+        app.screen.blit(alien.image, alien.rect)
 
     player.tick()
 
