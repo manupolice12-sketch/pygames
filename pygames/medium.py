@@ -1,1 +1,1 @@
-from ..pygames_engine.engines.power1 import*
+from pygames_engine.engines.power1 import*
