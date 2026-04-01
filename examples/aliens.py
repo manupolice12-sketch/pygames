@@ -1,3 +1,4 @@
+from pygames_engine import Game
 from pygames.advanced import *
 from os import path
 import random
@@ -15,10 +16,12 @@ app.load_image("player", path.join(assets, "player1.gif"))
 app.load_image("background", path.join(assets, "background.gif"))
 app.load_sound("boom", path.join(assets, "boom.wav"))
 app.load_image("bomb", path.join(assets, "bomb.gif"))
+app.load_sound("background", path.join(assets, "house_lo.ogg"))
 
-player = Player(app, 225, 430, width=40, height=50, color="blue", speed=5)
+player = Player(app, 225, 430, width=40, height=50, color="blue", speed=5, jump="up")
 player.image = app.images["player"]
 player.rect = player.image.get_rect(topleft=(225, 430))
+player.gravity = 0  
 app.start(player)
 
 bullets = []
@@ -42,12 +45,15 @@ bomb_cooldown = 0
 def game_logic():
     global shoot_cooldown, alien_dx, bomb_cooldown
 
+    if not hasattr(app, 'bg_started'):
+        app.sounds["background"].play(loops=-1)
+        app.bg_started = True
+
     app.img("background", 0, 0, 500, 500)
 
     if app.check_key_pressed("space") and shoot_cooldown <= 0:
-        bullet = PhysicSprite(app, player.rect.centerx - 4, player.rect.top - 10, width=8, height=16, color="yellow")
+        bullet = PhysicSprite(app, player.rect.centerx - 4, player.rect.top - 10, width=8, height=16, color="red")
         bullets.append(bullet)
-        bullet.image = app.images["bomb"]
         shoot_cooldown = 20
 
     if shoot_cooldown > 0:
@@ -57,6 +63,7 @@ def game_logic():
         shooter = random.choice(aliens)
         bomb = PhysicSprite(app, shooter.rect.centerx - 4, shooter.rect.bottom, width=8, height=16, color="red")
         bombs.append(bomb)
+        bomb.image = app.images["bomb"]
         bomb_cooldown = 60
 
     if bomb_cooldown > 0:
@@ -94,8 +101,8 @@ def game_logic():
 
     if hit_edge:
         alien_dx *= -1
-        for alien in aliens:
-            alien.rect.y += 20
+        # for alien in aliens:
+        #     alien.rect.y += 20
 
     for alien in aliens:
         app.screen.blit(alien.image, alien.rect)
