@@ -26,7 +26,7 @@ Source = "https://github.com/manupolice12-sketch/pygames"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["pygames*"]
+include = ["pygames*", "pygames_engine*"]
 
 [tool.setuptools.package-data]
 pygames = ["assets/*.png", "assets/*.wav", "assets/*.ttf"]
