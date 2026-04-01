@@ -83,7 +83,7 @@ class Game:
         if alpha:
             surface = Surface((width, height, SRCALPHA)).convert_alpha()
         else:
-            surface = Surface((width,height).convert())
+            surface = Surface((width,height)).convert()
             surface = surface.convert_alpha()
             if color:
                 try:
