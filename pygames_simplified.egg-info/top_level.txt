@@ -1,3 +1,0 @@
-pygames
-pygames venv
-pygames_engine
