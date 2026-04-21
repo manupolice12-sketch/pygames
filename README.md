@@ -194,3 +194,7 @@ Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more
 - GitHub: https://github.com/manupolice12-sketch/pygames
 - Bug Reports: https://github.com/manupolice12-sketch/pygames/issues
 - PyPI: https://pypi.org/project/pygames-simplified/
+
+## Notes
+
+game.zoom(factor) is highly discouraged as it fights with PhysicSprites
