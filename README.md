@@ -197,4 +197,4 @@ Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more
 
 ## Notes
 
-game.zoom(factor) is highly discouraged as it fights with PhysicSprites
+**game.zoom(factor)** is highly discouraged as it fights with PhysicSprites
