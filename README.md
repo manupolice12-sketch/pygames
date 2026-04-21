@@ -185,7 +185,7 @@ draw.rect(game.screen, "red", (100, 100, 50, 50))
 
 ## Version
 
-Current release: **v2.1.7**
+Current release: **v2.2.1**
 
 Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more Pythonic, flexible, and extensible.
 
