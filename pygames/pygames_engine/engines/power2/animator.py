@@ -37,29 +37,32 @@ class Animator:
         self.base_image = getattr(target, 'image', None)
         self.last_state = getattr(target, 'state', None)
         self.base_image = target.image.copy()
-
-    def refresh(self):
-        """Update the animation frame based on the sprite's current state.
         
-        This method should be called each frame to update animations.
-        It cycles through frames in the animations dictionary based on
-        the sprite's current state.
+        # Logging initialization
+        if hasattr(target, 'pgs'):
+            target.pgs._log(f"Animator initialized for {type(target).__name__}", "SUCCESS")
+
+    def refresh(self, state=None):
+        """Update the sprite's image based on its current animation state.
+        
+        Args:
+            state: The name of the animation state (e.g., 'walk', 'idle')
         """
-        if not hasattr(self.target, 'animations') or not hasattr(self.target, 'state'):
-            return
-
-        state = self.target.state
-        if state not in self.target.animations:
-            return
-
-        if self.target.state != self.last_state:
+        if state is None:
+            state = getattr(self.target, 'state', None)
+        
+        if state != self.last_state:
             self.current_frame = 0
-            self.last_state = self.target.state
-            self.last_update_time = pg.time.get_ticks()
+            self.last_state = state
+            if hasattr(self.target, 'pgs'):
+                self.target.pgs._log(f"Animation state changed to: {state}", "INFO")
+
+        if state is None or not hasattr(self.target, 'animations'):
+            return
 
         current_time = pg.time.get_ticks()
         if current_time - self.last_update_time > self.animation_speed:
-            frames = self.target.animations[state]
+            frames = self.target.animations.get(state)
             if not frames:
                 return
             self.current_frame = (self.current_frame + 1) % len(frames)
@@ -87,12 +90,5 @@ class Animator:
         """
         angle = (pg.time.get_ticks() * speed) % 360
         self.target.image = pg.transform.rotate(self.base_image, angle)
-    
-
-    def set_speed(self, speed):
-        """Set the animation frame update speed.
-        
-        Args:
-            speed: Time in milliseconds between frame updates
-        """
-        self.animation_speed = speed
+        center = self.target.rect.center
+        self.target.rect = self.target.image.get_rect(center=center)

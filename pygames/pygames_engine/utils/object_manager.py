@@ -33,16 +33,19 @@ class SSprites(sprite.Sprite):
             y: Initial Y position
             image_path: Optional path to an image file to load
             source: Optional pygame Surface to use as the sprite image
+            
+        Raises:
+            TypeError: If pgs_instance is not a valid Game instance
+            TypeError: If x or y are not numbers
+            FileNotFoundError: If the image file doesn't exist
         """
         super().__init__()
-        
         # This ensures the game engine is set up correctly before we add objects
         if not hasattr(pgs_instance, 'screen') or not hasattr(pgs_instance, 'objects'):
             raise TypeError(f"'{pgs_instance}' is not a valid Game instance.")
         
         # We check that the position coordinates are actual numbers to prevent errors
         if not isinstance(x, (int, float)) or not isinstance(y, (int, float)):
-            # Log the error to the engine before crashing
             pgs_instance._log(f"TypeError: Coordinates must be numbers (got x={type(x).__name__})", "ERROR")
             raise TypeError(f"x and y must be numbers, got x={type(x).__name__}, y={type(y).__name__}")
         
@@ -61,7 +64,7 @@ class SSprites(sprite.Sprite):
                 except (FileNotFoundError, error):
                     # Log an error if the specific source file cannot be found
                     self.pgs._log(f"Failed to load source: {source}", "ERROR")
-                    self. raise_file_not_found_error(source)
+                    self.raise_file_not_found_error(source)
         elif image_path:
             # If you provide a file path to an image
             try:
@@ -71,7 +74,7 @@ class SSprites(sprite.Sprite):
             except:
                 # Log an error if the image path is broken
                 self.pgs._log(f"Image path not found: {image_path}", "ERROR")
-                self. raise_file_not_found_error(image_path)
+                self.raise_file_not_found_error(image_path)
         else:
             # If no image is given, we create a simple white square as a placeholder
             self.image = self.pgs.create_surface(50, 50, color="white")
@@ -82,17 +85,29 @@ class SSprites(sprite.Sprite):
         # Log that the sprite has been fully initialized at its starting position
         self.pgs._log(f"Sprite initialized at position ({x}, {y})", "SUCCESS")
 
-    def  raise_file_not_found_error(self, name):
-        """Raise a FileNotFoundError with a descriptive message."""
+    def raise_file_not_found_error(self, name):
+        """Raise a FileNotFoundError with a descriptive message.
+        
+        Args:
+            name: The name of the file that wasn't found
+        """
         raise FileNotFoundError(f"The file '{name}' does not exist, check the file.")
 
     def draw(self):
-        """Draw the sprite to the screen."""
+        """Draw the sprite to the screen.
+        
+        This method is called automatically each frame for all active sprites.
+        """
         # This puts the sprite's image onto the game window at its current position
         self.pgs.screen.blit(self.image, self.rect)
 
     def move(self, dx, dy):
-        """Move the sprite by a relative amount."""
+        """Move the sprite by a relative amount.
+        
+        Args:
+            dx: Change in X position (positive = right)
+            dy: Change in Y position (positive = down)
+        """
         # This changes the position by adding to the current coordinates
         self.rect.x += dx
         self.rect.y += dy
