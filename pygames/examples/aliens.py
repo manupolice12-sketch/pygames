@@ -21,7 +21,6 @@ Usage:
     python examples/aliens.py
 """
 
-from pygames import Game
 from pygames.advanced import *
 from os import path
 import random
