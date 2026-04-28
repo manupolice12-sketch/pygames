@@ -166,4 +166,5 @@ def game_logic():
     player.tick()
 
 # Start the main game loop
-app.mainloop(game_logic)
+if __name__ == "__main__":
+    app.mainloop(game_logic)
