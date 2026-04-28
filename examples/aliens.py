@@ -34,6 +34,7 @@ assets = path.join(base_dir, 'assets')
 app = Game(500, 500, "Alien Invasion")
 app.start_score_counter()
 app.start_garbage_collecter()
+app.enable_logging()  # Enable logging to track game events and debug issues
 
 # Load all required assets (images and sounds)
 app.load_image("alien1", path.join(assets, "alien1.png"))
