@@ -86,7 +86,7 @@ class Game:
         except Exception:
             pass
 
-    def enable_logging(self, log_path=None):
+    def enable_logging(self, log_path="logs.txt"):
         """Enable logging and optionally set the log file path.
         
         Args:
