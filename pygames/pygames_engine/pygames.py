@@ -87,6 +87,7 @@ class Game:
             pass
 
     def enable_logging(self, log_path="logs.txt"):
+        import os
         """Turn on the logging system during gameplay.
         
         Args:
@@ -95,6 +96,10 @@ class Game:
         self.logging_enabled = True
         if log_path:
             self.log_file = log_path
+        else:
+            with open(self.log_file, "w") as f:
+                f.write("")  # Clear existing log file
+                self.log_file = log_path
         self._log("Logging system enabled manually", "INFO")
 
     def disable_logging(self):
