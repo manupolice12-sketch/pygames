@@ -1,10 +1,40 @@
+"""
+Pygames Engine - Main Game Class
+
+This module provides the core Game class for the Pygame-S engine.
+It handles game initialization, the main game loop, and provides
+various utility methods for game development.
+
+Features:
+    - Window and screen management
+    - Image and sound loading
+    - Sprite and object management
+    - Physics integration
+    - Score tracking
+    - Input handling
+
+Usage:
+    from pygames_engine import Game
+    app = Game(800, 600, "My Game")
+    app.mainloop(game_logic)
+"""
+
 from pygame import *
 import sys
 from .engines.power1.physics import *
 
 class Game:
     """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
+    
     def __init__(self, w=800, h=600, title="Pygame-S", icon_path=None):
+        """Initialize the game engine.
+        
+        Args:
+            w: Screen width in pixels (default: 800)
+            h: Screen height in pixels (default: 600)
+            title: Window title (default: "Pygame-S")
+            icon_path: Optional path to icon image file
+        """
         init()
         font.init()
         self.screen_width = w
@@ -27,9 +57,22 @@ class Game:
         self.is_running = True
 
     def set_title(self, title):
+        """Set the window title.
+        
+        Args:
+            title: String to display in window title bar
+        """
         display.set_caption(str(title))
 
     def set_icon(self, path):
+        """Set the window icon from an image file.
+        
+        Args:
+            path: Path to the icon image file
+            
+        Raises:
+            FileNotFoundError: If the icon file doesn't exist
+        """
         try:
             icon = image.load(path)
             display.set_icon(icon)
@@ -37,12 +80,33 @@ class Game:
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
     def load_image(self, name, path):
+        """Load an image and store it with a given name.
+        
+        Args:
+            name: Key to store the image under for later retrieval
+            path: Path to the image file
+            
+        Raises:
+            FileNotFoundError: If the image file doesn't exist
+        """
         try:
             self.images[name] = image.load(path).convert_alpha()
         except FileNotFoundError:
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
     def img(self, name, x, y, w=None, h=None):
+        """Draw a loaded image to the screen.
+        
+        Args:
+            name: Key of the image to draw (must be loaded first)
+            x: X coordinate for image placement
+            y: Y coordinate for image placement
+            w: Optional width to scale the image to
+            h: Optional height to scale the image to
+            
+        Raises:
+            FileNotFoundError: If the image name doesn't exist
+        """
         try:
             img = self.images.get(name)
             if img:
@@ -53,26 +117,50 @@ class Game:
             raise FileNotFoundError(f"The image '{name}' does not exist, check the name.")
 
     def load_sound(self, name, path):
+        """Load a sound file and store it with a given name.
+        
+        Args:
+            name: Key to store the sound under for later retrieval
+            path: Path to the sound file
+            
+        Raises:
+            FileNotFoundError: If the sound file doesn't exist
+        """
         try:
             self.sounds[name] = mixer.Sound(path)
         except FileNotFoundError:
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
     def play_sound(self, name):
+        """Play a loaded sound by name.
+        
+        Args:
+            name: Key of the sound to play
+            
+        Raises:
+            NameError: If the sound hasn't been loaded
+        """
         if name in self.sounds:
             self.sounds[name].play()
         else:
             raise NameError(f"Sound '{name}' not found. Make sure to load it first.")
 
     def start_score_counter(self):
+        """Enable score tracking and display during the game."""
         self.score_active = True
 
     def start_garbage_collecter(self):
+        """Enable automatic cleanup of objects outside the screen bounds."""
         self.garbage_collection = True
 
     def clean_up(self):
-      if self.garbage_collection:
-        b = 150
+        """Remove objects that are far outside the screen bounds.
+        
+        This method is called automatically if garbage collection is enabled.
+        It helps improve performance by removing off-screen objects.
+        """
+        if self.garbage_collection:
+           b = 150
         def in_bounds(o):
             return (o.rect.right > -b and o.rect.left < self.screen_width + b and
                     o.rect.bottom > -b and o.rect.top < self.screen_height + b)
@@ -80,6 +168,20 @@ class Game:
         self.solids  = [o for o in self.solids  if in_bounds(o)]
 
     def create_surface(self, width,height, color=None, alpha=None):
+        """Create a new surface (blank image) for game objects.
+        
+        Args:
+            width: Width of the surface in pixels
+            height: Height of the surface in pixels
+            color: Optional color to fill the surface with
+            alpha: Optional alpha channel value for transparency
+            
+        Returns:
+            A pygame Surface object
+            
+        Raises:
+            NameError: If an invalid color is provided
+        """
         if alpha:
             surface = Surface((width, height, SRCALPHA)).convert_alpha()
         else:
@@ -93,9 +195,19 @@ class Game:
         return surface
 
     def background(self, color):
+        """Fill the screen with a solid color.
+        
+        Args:
+            color: Color value (RGB tuple or color name string)
+        """
         self.screen.fill(color)    
 
     def start_loop(self):
+        """Update and draw all game objects each frame.
+        
+        This method is called automatically at the start of each frame
+        in the main loop. It handles physics updates and rendering.
+        """
         self.clean_up()
         for item in self.objects:
             if hasattr(item, 'apply_physics'):
@@ -106,15 +218,34 @@ class Game:
             self.screen.blit(text_surface, (10, 10))
 
     def show_score(self, x=10, y=10, color="white"):
+        """Display the current score at a specific position.
+        
+        Args:
+            x: X coordinate for score display
+            y: Y coordinate for score display
+            color: Color of the score text
+        """
         score_surf = self.font.render(f"Score: {self.score}", True, color)
         self.screen.blit(score_surf, (x, y))
 
     def start(self, *objects):
+        """Add objects to the game for tracking and rendering.
+        
+        Args:
+            *objects: Sprite objects to add to the game
+        """
         for item in objects:
             if item not in self.objects:
                 self.objects.append(item)
 
     def make_solid(self, *objects):
+        """Mark objects as solid (collidable) in the game.
+        
+        Solid objects will have physics collisions applied to them.
+        
+        Args:
+            *objects: Sprite objects to mark as solid
+        """
         for item in objects:
             if item not in self.solids:
                 self.solids.append(item)
@@ -122,6 +253,14 @@ class Game:
                     self.objects.append(item)
 
     def check_key_pressed(self, name):
+        """Check if a specific key is currently pressed.
+        
+        Args:
+            name: Name of the key to check (e.g., "space", "left", "a")
+            
+        Returns:
+            True if the key is pressed, False otherwise
+        """
         keys = key.get_pressed()
         name = name.lower()
         special_keys = {
@@ -138,24 +277,52 @@ class Game:
         return keys[key_const]
 
     def zoom(self, factor):
+        """Resize the game window.
+        
+        Args:
+            factor: Multiplier for the new size (e.g., 2.0 doubles the size)
+        """
         self.screen_width = int(self.screen_width * factor)
         self.screen_height = int(self.screen_height * factor)
         self.screen = display.set_mode((self.screen_width, self.screen_height))
 
     def set_speed(self, fps):
+        """Set the target frames per second.
+        
+        Args:
+            fps: Target frame rate (higher = smoother but more CPU usage)
+        """
         self.fps = fps
 
     def update_screen(self):
+        """Update the display with the current frame.
+        
+        This should be called at the end of each frame in the game loop.
+        """
         display.flip()
         self.clock.tick(self.fps)
 
     def process_events(self):
+        """Process pygame events (quit, input, etc.).
+        
+        Returns:
+            True if the game should continue running, False to quit
+        """
         for e in event.get():
             if e.type == QUIT:
                 self.is_running = False
         return self.is_running
 
     def mainloop(self, game_logic):
+        """Start the main game loop.
+        
+        This method runs the game until the window is closed or
+        the game is quit. It calls the provided game_logic function
+        each frame to update game state.
+        
+        Args:
+            game_logic: Function to call each frame for game updates
+        """
         while self.is_running:
             self.process_events()
             game_logic()
