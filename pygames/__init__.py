@@ -14,7 +14,5 @@ Usage:
     game.mainloop(game_logic)
 """
 
-# Re-export all public symbols from the game engine module
-# This provides a simplified import path for users
-from pygames_engine.pygames import*
-from pygames_engine.utils import*
+#This imports the init in pygames_engine
+from pygames_engine.__init__ import*

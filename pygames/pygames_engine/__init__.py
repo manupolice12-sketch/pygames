@@ -13,5 +13,5 @@ Submodules:
 """
 
 # Re-export core game functionality
-from .pygames import*
+from pygames import*
 from .utils.object_manager import*
