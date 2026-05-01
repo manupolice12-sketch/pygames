@@ -24,6 +24,7 @@ import sys
 from datetime import datetime
 from .engines.power1.physics import *
 import os
+import inspect
 
 class Game:
     """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
@@ -97,9 +98,10 @@ class Game:
         if log_path:
             self.log_file = log_path
         else:
-            base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-            self.log_file = os.path.join(base_dir, "logs.txt")
-            with open(self.log_file, "w") as f:
+           caller_frame = inspect.stack()[-1]
+           base_dir = os.path.dirname(os.path.abspath(caller_frame.filename))
+           self.log_file = os.path.join(base_dir, "logs.txt")
+           with open(self.log_file, "w") as f:
                 f.write("")  # Clear existing log file
         self._log("Logging system enabled manually", "INFO")
 
