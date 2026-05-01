@@ -97,10 +97,10 @@ class Game:
         if log_path:
             self.log_file = log_path
         else:
-            self.log_file = os.path.join(os.getcwd(), "logs.txt")
+            base_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
+            self.log_file = os.path.join(base_dir, "logs.txt")
             with open(self.log_file, "w") as f:
                 f.write("")  # Clear existing log file
-                self.log_file = log_path
         self._log("Logging system enabled manually", "INFO")
 
     def disable_logging(self):
