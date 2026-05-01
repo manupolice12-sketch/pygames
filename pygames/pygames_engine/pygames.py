@@ -21,10 +21,9 @@ Usage:
 
 from pygame import *
 import sys
+import os
 from datetime import datetime
 from .engines.power1.physics import *
-import os
-import inspect
 
 class Game:
     """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
@@ -45,9 +44,14 @@ class Game:
         self.screen_height = h
         self.screen = display.set_mode((w, h))
         
-        # Setup logging infrastructure
         self.logging_enabled = logging
-        self.log_file = "logs.txt"
+        
+        main_module = sys.modules.get('__main__')
+        if main_module and hasattr(main_module, '__file__'):
+            base_dir = os.path.dirname(os.path.abspath(main_module.__file__))
+            self.log_file = os.path.join(base_dir, "logs.txt")
+        else:
+            self.log_file = os.path.join(os.getcwd(), "logs.txt")
         
         self.set_title(title)
         if icon_path:
@@ -85,10 +89,9 @@ class Game:
             with open(self.log_file, "a") as f:
                 f.write(log_entry)
         except Exception:
-            # We don't want the logger itself to crash the game
             pass
 
-    def enable_logging(self, log_path):
+    def enable_logging(self, log_path=None):
         """Turn on the logging system during gameplay.
         
         Args:
@@ -98,11 +101,18 @@ class Game:
         if log_path:
             self.log_file = log_path
         else:
-           caller_frame = inspect.stack()[-1]
-           base_dir = os.path.dirname(os.path.abspath(caller_frame.filename))
-           self.log_file = os.path.join(base_dir, "logs.txt")
-           with open(self.log_file, "w") as f:
-                f.write("")  # Clear existing log file
+            main_module = sys.modules.get('__main__')
+            if main_module and hasattr(main_module, '__file__'):
+                base_dir = os.path.dirname(os.path.abspath(main_module.__file__))
+                self.log_file = os.path.join(base_dir, "logs.txt")
+            else:
+                self.log_file = os.path.join(os.getcwd(), "logs.txt")
+                
+            try:
+                with open(self.log_file, "w") as f:
+                    f.write("")
+            except Exception:
+                pass
         self._log("Logging system enabled manually", "INFO")
 
     def disable_logging(self):
@@ -175,7 +185,7 @@ class Game:
     def clean_up(self):
         """Remove objects that have moved too far off-screen."""
         if self.garbage_collection:
-            b = 150 # boundary padding
+            b = 150 
             initial_count = len(self.objects)
             def in_bounds(o):
                 return (o.rect.right > -b and o.rect.left < self.screen_width + b and
