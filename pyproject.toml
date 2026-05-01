@@ -29,4 +29,4 @@ where = ["."]
 include = ["pygames*", "pygames_engine*"]
 
 [tool.setuptools.package-data]
-pygames = ["assets/*.png", "assets/*.wav", "assets/*.ttf"]
+"pygames.examples" = ["assets/*.png", "assets/*.wav", "assets/*.ttf"]
