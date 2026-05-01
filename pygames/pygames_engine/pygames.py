@@ -23,6 +23,7 @@ from pygame import *
 import sys
 from datetime import datetime
 from .engines.power1.physics import *
+import os
 
 class Game:
     """Main class for the Pygame-S engine, handling game initialization, main loop, and core functionalities."""
@@ -86,8 +87,7 @@ class Game:
             # We don't want the logger itself to crash the game
             pass
 
-    def enable_logging(self, log_path="logs.txt"):
-        import os
+    def enable_logging(self, log_path):
         """Turn on the logging system during gameplay.
         
         Args:
@@ -97,6 +97,7 @@ class Game:
         if log_path:
             self.log_file = log_path
         else:
+            self.log_file = os.path.join(os.getcwd(), "logs.txt")
             with open(self.log_file, "w") as f:
                 f.write("")  # Clear existing log file
                 self.log_file = log_path
