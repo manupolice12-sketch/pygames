@@ -111,8 +111,8 @@ class Game:
             try:
                 with open(self.log_file, "w") as f:
                     f.write("")
-            except Exception:
-                pass
+            except Exception as e:
+                raise IOError(f"Failed to initialize log file: {e}")
         self._log("Logging system enabled manually", "INFO")
 
     def disable_logging(self):
