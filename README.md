@@ -74,6 +74,8 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 | `game.zoom(factor)` | Resize the window by a multiplier |
 | `game.mainloop(logic)` | Start the game loop |
 | `game.create_surface(width, height, color, alpha)` | Create a surface |
+| `game.enable_logging(log_file)`| Enables Logging for debugging |
+| `game.disable_logging()`| Disable Logging |
 ---
 
 ## Base Sprite — `SSprites`
@@ -198,3 +200,4 @@ Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more
 ## Notes
 
 **game.zoom(factor)** is highly discouraged as it fights with PhysicSprites
+**game.enable_logging(log_path)** creates a logs.txt on the root folder open on your IDE By default if you want a custom path for your logs.txt provide it as an argument. To help you find the logs.txt when you initialize it in the terminal the path of the logs.txt will be printed
