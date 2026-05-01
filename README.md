@@ -76,6 +76,7 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 | `game.create_surface(width, height, color, alpha)` | Create a surface |
 | `game.enable_logging(log_file)`| Enables Logging for debugging |
 | `game.disable_logging()`| Disable Logging |
+| `game._log(message, status)`| Logs the message with the status which is INFO, SUCESS or FAIL and the time  |
 ---
 
 ## Base Sprite — `SSprites`
