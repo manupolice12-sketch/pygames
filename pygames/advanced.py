@@ -11,6 +11,6 @@ Usage:
 """
 
 # Import advanced features from power2 engine and medium-level components
-from pygames_engine.engines.power2 import *
-from medium import*
-from __init__ import*
+from .pygames_engine.engines.power2 import *
+from .medium import*
+from .__init__ import*

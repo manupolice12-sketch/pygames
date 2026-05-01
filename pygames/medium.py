@@ -11,5 +11,5 @@ Usage:
 
 # Import physics sprite functionality from the power1 engine
 # This provides a higher-level abstraction for physics-based game objects
-from pygames_engine.engines.power1 import*
-from __init__ import*
+from .pygames_engine.engines.power1 import*
+from .__init__ import*
