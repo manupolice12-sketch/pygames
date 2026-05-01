@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pygames-simplified"
-version = "2.4.1"
+version = "2.4.2"
 description = "PyGame Simplified — A beginner-friendly wrapper around Pygame"
 readme = "README.md"
 requires-python = ">=3.7"
@@ -29,4 +29,4 @@ where = ["."]
 include = ["pygames*", "pygames_engine*"]
 
 [tool.setuptools.package-data]
-"pygames.examples" = ["assets/*.png", "assets/*.wav", "assets/*.ttf"]
+"pygames.examples" = ["assets/*.png", "assets/*.gif", "assets/*.wav", "assets/*.ogg", "assets/*.ttf"]
