@@ -15,4 +15,4 @@ Usage:
 """
 
 #This imports the init in pygames_engine
-from pygames_engine.__init__ import*
+from .pygames_engine.__init__ import*
