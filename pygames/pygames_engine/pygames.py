@@ -99,7 +99,15 @@ class Game:
         """
         self.logging_enabled = True
         if log_path:
-            self.log_file = log_path
+            if os.path.exists(log_path):
+               self.log_file = log_path
+            else:
+                try:
+                    with open(log_path, "w") as f:
+                        f.write("")
+                    self.log_file = log_path
+                except Exception as e:
+                    raise IOError(f"Failed to initialize log file at '{log_path}': {e}")   
         else:
             main_module = sys.modules.get('__main__')
             if main_module and hasattr(main_module, '__file__'):
