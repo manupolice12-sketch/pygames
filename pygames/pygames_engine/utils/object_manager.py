@@ -79,10 +79,32 @@ class SSprites(sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.pgs._log(f"Sprite initialized at position ({x}, {y})", "SUCCESS")
 
+    # ------------------------------------------------------------------
+    # pygame Group integration
+    # ------------------------------------------------------------------
+
+    def update(self, solids=None):
+        """Called automatically by pygame Groups each frame.
+
+        Subclasses override this to add per-frame logic. The base
+        implementation applies physics if available.
+
+        Args:
+            solids: Iterable of solid sprites passed down from Game.start_loop().
+        """
+        if solids and hasattr(self, 'apply_physics'):
+            self.apply_physics(list(solids))
+
+    # ------------------------------------------------------------------
+    # Manual helpers (kept for backwards compatibility)
+    # ------------------------------------------------------------------
+
     def draw(self):
         """Draw the sprite to the screen.
 
-        This method is called automatically each frame for all active sprites.
+        Normally handled automatically by Group.draw() inside the engine loop.
+        Call this manually only if you have removed the sprite from the group
+        but still want to render it.
         """
         self.pgs.screen.blit(self.image, self.rect)
 
@@ -95,3 +117,12 @@ class SSprites(sprite.Sprite):
         """
         self.rect.x += dx
         self.rect.y += dy
+
+    def remove_from_game(self):
+        """Remove this sprite from all groups it belongs to.
+
+        This is the clean way to destroy a sprite — it removes it from
+        Game.objects, Game.solids, and any other group in one call.
+        """
+        self.kill()
+        self.pgs._log(f"{type(self).__name__} removed from all groups", "INFO")

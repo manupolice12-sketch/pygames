@@ -23,6 +23,7 @@ from pygames.medium import PhysicSprite, Game                       # Physics on
 
 ```python
 from pygames.advanced import Player, Game
+from pygames.pygames_engine.pygames import LAYER_BACKGROUND, LAYER_PLAYER
 from pygames.pygames_engine.utils.object_manager import SSprites
 import pygame
 
@@ -32,12 +33,12 @@ player = Player(game, 100, 300)
 ground = SSprites(game, 0, 550, source=pygame.Surface((800, 50)))
 ground.image.fill("green")
 
-game.start(player)
-game.make_solid(ground)
+game.start(player, layer=LAYER_PLAYER)
+game.make_solid(ground, layer=LAYER_BACKGROUND)
 
 def logic():
     game.background("skyblue")
-    player.tick()
+    # No need to call player.tick() — the group handles it automatically
 
 game.mainloop(logic)
 ```
@@ -62,13 +63,16 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 | Method | Description |
 |---|---|
 | `game.background(color)` | Fill the screen with a color each frame |
-| `game.start(*objects)` | Register objects to be drawn and updated |
-| `game.make_solid(*objects)` | Mark objects as collidable |
+| `game.start(*objects, layer=LAYER_DEFAULT)` | Register sprites at a given draw layer |
+| `game.make_solid(*objects, layer=LAYER_DEFAULT)` | Mark sprites as collidable and register them |
+| `game.set_layer(sprite, layer)` | Move a sprite to a different draw layer at runtime |
+| `game.get_layer(sprite)` | Return the current layer number of a sprite |
+| `game.get_sprites_in_layer(layer)` | Return a list of all sprites in a layer |
 | `game.check_key_pressed(name)` | Check if a key is held — e.g. `"left"`, `"space"`, `"w"` |
 | `game.start_score_counter()` | Display score automatically each frame |
 | `game.show_score(x, y, color)` | Manually draw the score at a given position |
 | `game.score` | Set or read the current score value |
-| `game.start_garbage_collector()` | Auto-remove objects that move off-screen |
+| `game.start_garbage_collector()` | Auto-remove sprites that move off-screen |
 | `game.load_image(name, path)` | Load an image by name |
 | `game.img(name, x, y, w, h)` | Draw a loaded image (scaled copies are cached) |
 | `game.load_sound(name, path)` | Load a sound by name |
@@ -87,6 +91,39 @@ game = Game(w=800, h=600, title="My Game", icon_path=None)
 
 ---
 
+## Draw Layers
+
+Sprites are drawn back-to-front by layer number. Lower numbers appear behind higher numbers. Four named constants are provided for convenience:
+
+```python
+from pygames.pygames_engine.pygames import LAYER_BACKGROUND, LAYER_DEFAULT, LAYER_PLAYER, LAYER_UI
+
+# LAYER_BACKGROUND = 0  — tiles, sky, scenery
+# LAYER_DEFAULT    = 1  — general objects, platforms, enemies
+# LAYER_PLAYER     = 2  — the player character
+# LAYER_UI         = 3  — score displays, health bars, overlays
+```
+
+You can use any integer — these constants are just a sensible starting point.
+
+```python
+game.start(sky, layer=LAYER_BACKGROUND)
+game.start(platform, layer=LAYER_DEFAULT)
+game.start(player, layer=LAYER_PLAYER)
+game.start(health_bar, layer=LAYER_UI)
+
+# Move a sprite to a different layer at runtime
+game.set_layer(enemy, LAYER_PLAYER)
+
+# Find out what layer a sprite is on
+print(game.get_layer(player))   # 2
+
+# Get all sprites on a specific layer
+ui_sprites = game.get_sprites_in_layer(LAYER_UI)
+```
+
+---
+
 ## Base Sprite — `SSprites`
 
 ```python
@@ -97,8 +134,10 @@ The base class for all game objects. Accepts an image path, a raw `Surface`, or 
 
 | Method | Description |
 |---|---|
-| `obj.draw()` | Draw the object to the screen |
-| `obj.move(dx, dy)` | Move the object by an offset |
+| `obj.update(solids)` | Called automatically by the engine each frame — apply physics if available |
+| `obj.draw()` | Draw manually (only needed outside the engine loop) |
+| `obj.move(dx, dy)` | Move the sprite by an offset |
+| `obj.remove_from_game()` | Remove this sprite from all groups cleanly |
 
 ---
 
@@ -120,7 +159,8 @@ Extends `SSprites` with gravity, velocity, and collision detection.
 
 | Method | Description |
 |---|---|
-| `obj.apply_physics(solids)` | Apply gravity and resolve collisions — called automatically each frame |
+| `obj.update(solids)` | Called by the engine group each frame — runs apply_physics |
+| `obj.apply_physics(solids)` | Apply gravity and resolve collisions manually |
 | `obj.jump(force=15)` | Jump if currently on the ground |
 
 Vertical and horizontal collisions are resolved in separate passes, which prevents corner-clipping on platform edges.
@@ -136,10 +176,13 @@ player = Player(game, x, y, width=40, height=60, color="blue", speed=5,
 
 Extends `PhysicSprite` with keyboard input. All key bindings are customisable.
 
+When registered with `game.start()`, the player's input and physics are handled automatically — **you no longer need to call `player.tick()` in your logic function.**
+
 | Method | Description |
 |---|---|
-| `player.tick()` | Process input and update state — call once per frame in your logic function |
-| `player.handle_input()` | Reads left, right, and jump keys and sets velocity accordingly |
+| `player.update(solids)` | Called automatically — reads input then applies physics |
+| `player.handle_input()` | Read keys and set velocity |
+| `player.tick()` | Legacy alias — reads input only. No longer needed in normal use. |
 
 ---
 
@@ -162,6 +205,18 @@ Works with sprites that have a `.state` string and an `.animations` dict mapping
 | `anim.rotate_loop(speed=0.1)` | Continuous rotation (degrees per millisecond) |
 
 > **Note:** `hover()` modifies `rect.y` directly. Do not use it on sprites that also have `apply_physics` running — the two will conflict.
+
+---
+
+## Removing Sprites
+
+```python
+# Remove a sprite from the game entirely
+enemy.remove_from_game()   # removes from objects, solids, and any other group
+
+# Or use pygame's built-in directly
+enemy.kill()
+```
 
 ---
 
@@ -192,7 +247,7 @@ Pass `logging=True` to `Game()` or call `game.enable_logging()` at any time. A `
 
 ## Version
 
-Current release: **v2.5.0**
+Current release: **v2.6.0**
 
 Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more Pythonic, flexible, and extensible.
 

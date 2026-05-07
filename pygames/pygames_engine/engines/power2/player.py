@@ -70,6 +70,25 @@ class Player(PhysicSprite):
         if self.pgs.check_key_pressed(self.key_jump):
             self.jump()
 
+    def update(self, solids=None):
+        """Called automatically by pygame Groups each frame.
+
+        Processes input first, then applies physics. This means you no longer
+        need to call player.tick() manually — it is handled by the group.
+        tick() is kept as an alias for backwards compatibility.
+
+        Args:
+            solids: Iterable of solid sprites (passed from Game.start_loop()).
+        """
+        self.handle_input()
+        self.apply_physics(list(solids) if solids else [])
+
     def tick(self):
-        """Update player state each frame (call once per frame)."""
+        """Process input and update physics for this frame.
+
+        Kept for backwards compatibility. When the player is registered with
+        game.start(), update() is called automatically and tick() is not
+        needed. Only call tick() manually if you are managing the player
+        outside of the engine loop.
+        """
         self.handle_input()

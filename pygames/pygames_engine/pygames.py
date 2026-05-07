@@ -8,7 +8,8 @@ various utility methods for game development.
 Features:
     - Window and screen management
     - Image and sound loading
-    - Sprite and object management
+    - Sprite and object management via pygame Groups
+    - Layered drawing with LayeredUpdates
     - Physics integration
     - Score tracking
     - Input handling
@@ -26,12 +27,20 @@ from datetime import datetime
 import pygame
 from pygame import (
     display, event, font, image, key, mixer, time, transform,
-    Surface, QUIT, SRCALPHA, K_SPACE, K_ESCAPE, K_UP, K_DOWN,
-    K_LEFT, K_RIGHT, K_RETURN, K_LSHIFT, K_LCTRL, K_TAB, K_BACKSPACE,
-    init, quit as pg_quit
+    Surface, QUIT, SRCALPHA,
+    K_SPACE, K_ESCAPE, K_UP, K_DOWN, K_LEFT, K_RIGHT,
+    K_RETURN, K_LSHIFT, K_LCTRL, K_TAB, K_BACKSPACE,
+    init, quit as pg_quit,
+    sprite as sprite_module,
 )
 
 from .engines.power1.physics import PhysicSprite  # noqa: F401 – re-exported
+
+# Default layer constants — importable by user code.
+LAYER_BACKGROUND = 0
+LAYER_DEFAULT    = 1
+LAYER_PLAYER     = 2
+LAYER_UI         = 3
 
 
 class Game:
@@ -70,16 +79,22 @@ class Game:
         self.font = font.SysFont("Arial", 30)
         self.sounds = {}
         self.images = {}
-        # Use sets for O(1) membership checks in start() / make_solid()
-        self.objects: list = []
-        self.solids: set = set()
+
+        # LayeredUpdates: a Group that draws sprites in layer order.
+        # Lower layer numbers are drawn first (furthest back).
+        # Layers: LAYER_BACKGROUND=0, LAYER_DEFAULT=1, LAYER_PLAYER=2, LAYER_UI=3
+        self.objects = sprite_module.LayeredUpdates()
+
+        # Solids is a plain Group — it only needs to supply a sprite list
+        # for collision queries, so layering is not needed here.
+        self.solids = sprite_module.Group()
+
         self.score = 0
         self.score_active = False
         self.garbage_collection = False
         self.fps = 60
         self.is_running = True
 
-        # Cache key state once per frame instead of re-querying per check_key_pressed call
         self._key_state = None
 
         self._log(f"Game engine initialized: {w}x{h}", "SUCCESS")
@@ -168,9 +183,8 @@ class Game:
     def img(self, name, x, y, w=None, h=None):
         """Draw a loaded image to the screen.
 
-        If w and h are given and differ from the image's current size,
-        a scaled copy is used. Scaled surfaces are cached to avoid
-        recreating them every frame.
+        Scaled copies are cached after the first scale so this is safe to
+        call every frame without a performance penalty.
         """
         src = self.images.get(name)
         if src is None:
@@ -219,36 +233,105 @@ class Game:
         self.screen.blit(score_surf, (x, y))
 
     # ------------------------------------------------------------------
-    # Object management
+    # Object / Group management
     # ------------------------------------------------------------------
+
+    def start(self, *objects, layer=LAYER_DEFAULT):
+        """Add sprites to the game loop at the given draw layer.
+
+        Args:
+            *objects: One or more SSprites (or subclass) instances.
+            layer: Draw layer (default: LAYER_DEFAULT = 1).
+                   Lower numbers are drawn first (further back).
+                   Use the LAYER_* constants or any integer.
+
+        Example:
+            game.start(background_tile, layer=LAYER_BACKGROUND)
+            game.start(player, layer=LAYER_PLAYER)
+            game.start(hud_icon, layer=LAYER_UI)
+        """
+        for item in objects:
+            if not self.objects.has(item):
+                self.objects.add(item, layer=layer)
+                self._log(
+                    f"Added {type(item).__name__} to layer {layer}", "SUCCESS"
+                )
+
+    def make_solid(self, *objects, layer=LAYER_DEFAULT):
+        """Mark sprites as solid for physics collision and add to the game loop.
+
+        Args:
+            *objects: Sprites to make solid.
+            layer: Draw layer for these sprites (default: LAYER_DEFAULT).
+        """
+        for item in objects:
+            self.solids.add(item)
+            if not self.objects.has(item):
+                self.objects.add(item, layer=layer)
+            self._log(f"Marked {type(item).__name__} as solid", "SUCCESS")
+
+    def set_layer(self, obj, layer):
+        """Move a sprite to a different draw layer.
+
+        Args:
+            obj: The sprite to move.
+            layer: The new layer number.
+        """
+        if self.objects.has(obj):
+            self.objects.change_layer(obj, layer)
+            self._log(f"{type(obj).__name__} moved to layer {layer}", "INFO")
+
+    def get_layer(self, obj):
+        """Return the current draw layer of a sprite.
+
+        Args:
+            obj: The sprite to query.
+
+        Returns:
+            Integer layer number, or None if the sprite is not in the game.
+        """
+        if self.objects.has(obj):
+            return self.objects.get_layer_of_sprite(obj)
+        return None
+
+    def get_sprites_in_layer(self, layer):
+        """Return a list of all sprites in a given layer.
+
+        Args:
+            layer: The layer number to query.
+
+        Returns:
+            List of sprites in that layer.
+        """
+        return self.objects.get_sprites_from_layer(layer)
 
     def start_garbage_collector(self):
         """Enable automatic removal of off-screen objects."""
         self.garbage_collection = True
         self._log("Garbage collector activated", "INFO")
 
-    # Legacy spelling kept as an alias so existing code doesn't break.
     def start_garbage_collecter(self):
+        """Deprecated alias for start_garbage_collector()."""
         self.start_garbage_collector()
 
     def clean_up(self):
-        """Remove objects that have moved too far off-screen."""
+        """Remove sprites that have moved too far off-screen.
+
+        Uses sprite.kill() which removes the sprite from every group it
+        belongs to — no manual sync between objects and solids needed.
+        """
         if not self.garbage_collection:
             return
         margin = 150
-        initial_count = len(self.objects)
-
-        self.objects = [
+        to_remove = [
             o for o in self.objects
-            if (o.rect.right > -margin and o.rect.left < self.screen_width + margin
-                and o.rect.bottom > -margin and o.rect.top < self.screen_height + margin)
+            if not (o.rect.right > -margin and o.rect.left < self.screen_width + margin
+                    and o.rect.bottom > -margin and o.rect.top < self.screen_height + margin)
         ]
-        # Keep solids in sync; solids is a set so discard is safe.
-        self.solids = {o for o in self.solids if o in self.objects}
-
-        removed = initial_count - len(self.objects)
-        if removed > 0:
-            self._log(f"Garbage collector removed {removed} objects", "INFO")
+        for o in to_remove:
+            o.kill()  # Removes from self.objects, self.solids, and any other group
+        if to_remove:
+            self._log(f"Garbage collector removed {len(to_remove)} objects", "INFO")
 
     def create_surface(self, width, height, color=None, alpha=None):
         """Create a new pygame Surface."""
@@ -267,21 +350,6 @@ class Game:
     def background(self, color):
         """Fill the entire screen with a color."""
         self.screen.fill(color)
-
-    def start(self, *objects):
-        """Add objects to the main loop."""
-        for item in objects:
-            if item not in self.objects:
-                self.objects.append(item)
-                self._log(f"Added {type(item).__name__} to game", "SUCCESS")
-
-    def make_solid(self, *objects):
-        """Mark objects as solid for physics collision detection."""
-        for item in objects:
-            self.solids.add(item)
-            if item not in self.objects:
-                self.objects.append(item)
-            self._log(f"Marked {type(item).__name__} as solid", "SUCCESS")
 
     # ------------------------------------------------------------------
     # Input
@@ -329,11 +397,7 @@ class Game:
         self.clock.tick(self.fps)
 
     def process_events(self):
-        """Handle system events (window close, etc.).
-
-        Also refreshes the per-frame key state cache so check_key_pressed
-        always reflects the current frame.
-        """
+        """Handle system events and refresh the per-frame key state cache."""
         self._key_state = key.get_pressed()
         for e in event.get():
             if e.type == QUIT:
@@ -345,13 +409,21 @@ class Game:
     # ------------------------------------------------------------------
 
     def start_loop(self):
-        """Apply physics, draw objects, and optionally render the score."""
+        """Update all sprites and draw them in layer order.
+
+        Group.update(solids) passes the solid sprite list into every sprite's
+        update() method. Group.draw() then blits all sprites onto the screen
+        in layer order (lowest layer number drawn first).
+        """
         self.clean_up()
-        solid_list = list(self.solids)
-        for item in self.objects:
-            if hasattr(item, 'apply_physics'):
-                item.apply_physics(solid_list)
-            item.draw()
+
+        # Pass solids group into each sprite's update() so physics sprites
+        # can resolve collisions without needing a direct Game reference.
+        self.objects.update(self.solids)
+
+        # LayeredUpdates.draw() respects layer order automatically.
+        self.objects.draw(self.screen)
+
         if self.score_active:
             text_surface = self.font.render(f"Score: {self.score}", True, "white")
             self.screen.blit(text_surface, (10, 10))

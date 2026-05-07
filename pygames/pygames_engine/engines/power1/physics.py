@@ -64,6 +64,16 @@ class PhysicSprite(SSprites):
 
         app._log(f"PhysicSprite created at ({x}, {y}) with gravity {gravity}", "SUCCESS")
 
+    def update(self, solids=None):
+        """Called automatically by pygame Groups each frame.
+
+        Applies physics against the provided solids.
+
+        Args:
+            solids: Iterable of solid sprites (passed from Game.start_loop()).
+        """
+        self.apply_physics(list(solids) if solids else [])
+
     def apply_physics(self, solids=None, gravity=True):
         """Apply one frame of physics: gravity, velocity, and collision resolution.
 
@@ -89,11 +99,11 @@ class PhysicSprite(SSprites):
             if solid is self:
                 continue
             if self.rect.colliderect(solid.rect):
-                if self.vel_y > 0:          # falling — land on top of solid
+                if self.vel_y > 0:
                     self.rect.bottom = solid.rect.top
                     self.vel_y = 0.0
                     self.on_ground = True
-                elif self.vel_y < 0:        # rising — hit ceiling
+                elif self.vel_y < 0:
                     self.rect.top = solid.rect.bottom
                     self.vel_y = 0.0
 
@@ -110,9 +120,9 @@ class PhysicSprite(SSprites):
             if solid is self:
                 continue
             if self.rect.colliderect(solid.rect):
-                if self.vel_x > 0:          # moving right — hit left face of solid
+                if self.vel_x > 0:
                     self.rect.right = solid.rect.left
-                elif self.vel_x < 0:        # moving left — hit right face of solid
+                elif self.vel_x < 0:
                     self.rect.left = solid.rect.right
 
     def jump(self, force=15):
