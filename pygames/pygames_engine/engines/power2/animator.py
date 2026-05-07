@@ -13,44 +13,44 @@ Usage:
     animator.refresh()
 """
 
-import time
 import math
 import pygame as pg
 
 
 class Animator:
-    """A class that manages sprite animations, allowing for frame updates based on the target sprite's state and providing
-       additional animation effects like hovering and rotating."""
-    
-    def __init__(self, target, animation_speed=0.1):
+    """Manages sprite animations, hover, and rotation effects."""
+
+    def __init__(self, target, animation_speed=100):
         """Initialize the animator for a sprite.
-        
+
         Args:
-            target: The sprite to animate (must have 'image' and optionally 'state' and 'animations' attributes)
-            animation_speed: Time in milliseconds between frame updates (default: 0.1)
+            target: The sprite to animate (must have 'image'; optionally
+                    'state' and 'animations').
+            animation_speed: Milliseconds between frame updates (default: 100).
+                             A value of 100 means ~10 fps for animations.
         """
         self.target = target
+        # animation_speed is in milliseconds (matches pg.time.get_ticks units).
         self.animation_speed = animation_speed
         self.current_frame = 0
         self.last_update_time = pg.time.get_ticks()
-        self.base_y = getattr(target, 'y', 0)
-        self.base_image = getattr(target, 'image', None)
-        self.last_state = getattr(target, 'state', None)
+        self.base_y = getattr(target, 'rect', None) and target.rect.y or getattr(target, 'y', 0)
         self.base_image = target.image.copy()
-        
-        # Logging initialization
+        self.last_state = getattr(target, 'state', None)
+
         if hasattr(target, 'pgs'):
             target.pgs._log(f"Animator initialized for {type(target).__name__}", "SUCCESS")
 
     def refresh(self, state=None):
         """Update the sprite's image based on its current animation state.
-        
+
         Args:
-            state: The name of the animation state (e.g., 'walk', 'idle')
+            state: Animation state name (e.g. 'walk', 'idle'). Falls back to
+                   target.state if not provided.
         """
         if state is None:
             state = getattr(self.target, 'state', None)
-        
+
         if state != self.last_state:
             self.current_frame = 0
             self.last_state = state
@@ -60,35 +60,39 @@ class Animator:
         if state is None or not hasattr(self.target, 'animations'):
             return
 
+        frames = self.target.animations.get(state)
+        if not frames:
+            return
+
         current_time = pg.time.get_ticks()
-        if current_time - self.last_update_time > self.animation_speed:
-            frames = self.target.animations.get(state)
-            if not frames:
-                return
+        if current_time - self.last_update_time >= self.animation_speed:
             self.current_frame = (self.current_frame + 1) % len(frames)
             self.target.image = frames[self.current_frame]
             self.last_update_time = current_time
 
-    def hover(self, amplitude=5, speed=5):
-        """Apply a hovering effect to the sprite.
-        
-        The sprite will move up and down in a smooth sine wave pattern.
-        
-        Args:
-            amplitude: Maximum distance to move up/down in pixels (default: 5)
-            speed: Speed of the hover animation (default: 5)
-        """
-        self.target.rect.y = self.base_y + math.sin(pg.time.get_ticks() * speed) * amplitude
+    def hover(self, amplitude=5, speed=0.005):
+        """Apply a smooth sine-wave hover effect to the sprite.
 
-    def rotate_loop(self, speed=100):
-        """Continuously rotate the sprite.
-        
-        The sprite will rotate in a full 360 degree loop.
-        
+        Note: This modifies rect.y directly. Do not use on sprites that also
+        have apply_physics running, as the two will conflict.
+
         Args:
-            speed: Rotation speed (default: 100)
+            amplitude: Maximum vertical displacement in pixels (default: 5).
+            speed: Oscillation speed in cycles per millisecond (default: 0.005).
+        """
+        self.target.rect.y = int(
+            self.base_y + math.sin(pg.time.get_ticks() * speed) * amplitude
+        )
+
+    def rotate_loop(self, speed=0.1):
+        """Continuously rotate the sprite around its centre.
+
+        Args:
+            speed: Degrees per millisecond (default: 0.1 ≈ one full rotation
+                   every ~3.6 seconds).
         """
         angle = (pg.time.get_ticks() * speed) % 360
-        self.target.image = pg.transform.rotate(self.base_image, angle)
+        rotated = pg.transform.rotate(self.base_image, angle)
         center = self.target.rect.center
-        self.target.rect = self.target.image.get_rect(center=center)
+        self.target.image = rotated
+        self.target.rect = rotated.get_rect(center=center)

@@ -1,16 +1,18 @@
 """
 Advanced Level Game Components
 
-This module provides advanced game functionality including animation and player
-controls. It combines features from both power1 and power2 engines along with
-medium-level components.
+Provides the Player and Animator classes for full-featured game objects
+with physics, keyboard controls, and sprite animation.
 
 Usage:
     from pygames.advanced import Player, Animator
     player = Player(app, x, y)
+    anim = Animator(player)
 """
 
-# Import advanced features from power2 engine and medium-level components
-from .pygames_engine.engines.power2 import *
-from .medium import*
-from .__init__ import*
+from .pygames_engine.engines.power2.player import Player
+from .pygames_engine.engines.power2.animator import Animator
+from .pygames_engine.engines.power1.physics import PhysicSprite
+from .pygames_engine.pygames import Game
+
+__all__ = ["Player", "Animator", "PhysicSprite", "Game"]
