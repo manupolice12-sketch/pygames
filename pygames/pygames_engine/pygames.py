@@ -34,9 +34,9 @@ from pygame import (
     sprite as sprite_module,
 )
 
-from .engines.power1.physics import PhysicSprite  # noqa: F401 – re-exported
+from .engines.power1.physics import PhysicSprite  # Optional physics integration
 
-# Default layer constants — importable by user code.
+# Default layer constants
 LAYER_BACKGROUND = 0
 LAYER_DEFAULT    = 1
 LAYER_PLAYER     = 2
@@ -45,10 +45,9 @@ LAYER_UI         = 3
 
 class Game:
     """Main class for the Pygame-S engine."""
-
+    
     def __init__(self, w=800, h=600, title="Pygame-S", icon_path=None, logging=False):
         """Initialize the game engine.
-
         Args:
             w: Screen width in pixels (default: 800)
             h: Screen height in pixels (default: 600)
@@ -61,9 +60,13 @@ class Game:
         self.screen_width = w
         self.screen_height = h
         self.screen = display.set_mode((w, h))
-
         self.logging_enabled = logging
-
+        self._SPECIAL_KEYS = {
+        "space": K_SPACE, "esc": K_ESCAPE, "up": K_UP, "down": K_DOWN,
+        "left": K_LEFT, "right": K_RIGHT, "enter": K_RETURN,
+        "shift": K_LSHIFT, "ctrl": K_LCTRL, "tab": K_TAB,
+        "backspace": K_BACKSPACE,
+    }
         main_module = sys.modules.get('__main__')
         if main_module and hasattr(main_module, '__file__'):
             base_dir = os.path.dirname(os.path.abspath(main_module.__file__))
@@ -79,29 +82,18 @@ class Game:
         self.font = font.SysFont("Arial", 30)
         self.sounds = {}
         self.images = {}
-
-        # LayeredUpdates: a Group that draws sprites in layer order.
-        # Lower layer numbers are drawn first (furthest back).
-        # Layers: LAYER_BACKGROUND=0, LAYER_DEFAULT=1, LAYER_PLAYER=2, LAYER_UI=3
+        # LayeredUpdates is a Group that also tracks draw order via layers.
         self.objects = sprite_module.LayeredUpdates()
-
-        # Solids is a plain Group — it only needs to supply a sprite list
-        # for collision queries, so layering is not needed here.
         self.solids = sprite_module.Group()
-
         self.score = 0
         self.score_active = False
         self.garbage_collection = False
         self.fps = 60
         self.is_running = True
-
         self._key_state = None
-
         self._log(f"Game engine initialized: {w}x{h}", "SUCCESS")
 
-    # ------------------------------------------------------------------
     # Logging
-    # ------------------------------------------------------------------
 
     def _log(self, message, status="INFO"):
         """Write a timestamped entry to the log file (if logging is on)."""
@@ -112,7 +104,7 @@ class Game:
             with open(self.log_file, "a") as f:
                 f.write(f"[{timestamp}] [{status}] {message}\n")
         except Exception:
-            pass
+            raise IOError(f"Logging error: Could not write to log file at '{self.log_file}'")
 
     def enable_logging(self, log_path=None):
         """Turn on the logging system.
@@ -146,12 +138,10 @@ class Game:
 
     def disable_logging(self):
         """Turn off the logging system."""
-        self._log("Logging system disabled", "INFO")
+        self._log("Logging system disabled manually", "INFO")
         self.logging_enabled = False
 
-    # ------------------------------------------------------------------
     # Window management
-    # ------------------------------------------------------------------
 
     def set_title(self, title):
         """Set the window title."""
@@ -167,9 +157,7 @@ class Game:
             self._log(f"Failed to load icon: {path}", "ERROR")
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
-    # ------------------------------------------------------------------
     # Asset loading
-    # ------------------------------------------------------------------
 
     def load_image(self, name, path):
         """Load an image and store it under name."""
@@ -218,9 +206,7 @@ class Game:
             self._log(f"Sound '{name}' not found", "ERROR")
             raise NameError(f"Sound '{name}' not found.")
 
-    # ------------------------------------------------------------------
     # Score
-    # ------------------------------------------------------------------
 
     def start_score_counter(self):
         """Enable the automatic score display each frame."""
@@ -232,9 +218,7 @@ class Game:
         score_surf = self.font.render(f"Score: {self.score}", True, color)
         self.screen.blit(score_surf, (x, y))
 
-    # ------------------------------------------------------------------
-    # Object / Group management
-    # ------------------------------------------------------------------
+    # Object management
 
     def start(self, *objects, layer=LAYER_DEFAULT):
         """Add sprites to the game loop at the given draw layer.
@@ -351,16 +335,7 @@ class Game:
         """Fill the entire screen with a color."""
         self.screen.fill(color)
 
-    # ------------------------------------------------------------------
     # Input
-    # ------------------------------------------------------------------
-
-    _SPECIAL_KEYS = {
-        "space": K_SPACE, "esc": K_ESCAPE, "up": K_UP, "down": K_DOWN,
-        "left": K_LEFT, "right": K_RIGHT, "enter": K_RETURN,
-        "shift": K_LSHIFT, "ctrl": K_LCTRL, "tab": K_TAB,
-        "backspace": K_BACKSPACE,
-    }
 
     def check_key_pressed(self, name):
         """Check if a specific key is held down.
@@ -376,9 +351,7 @@ class Game:
         key_const = getattr(pygame, f"K_{name.upper()}", None)
         return bool(self._key_state[key_const]) if key_const is not None else False
 
-    # ------------------------------------------------------------------
     # Screen helpers
-    # ------------------------------------------------------------------
 
     def zoom(self, factor):
         """Scale the screen resolution by factor."""
@@ -404,9 +377,7 @@ class Game:
                 self.is_running = False
         return self.is_running
 
-    # ------------------------------------------------------------------
     # Main loop
-    # ------------------------------------------------------------------
 
     def start_loop(self):
         """Update all sprites and draw them in layer order.

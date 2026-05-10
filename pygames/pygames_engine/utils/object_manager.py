@@ -79,9 +79,7 @@ class SSprites(sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.pgs._log(f"Sprite initialized at position ({x}, {y})", "SUCCESS")
 
-    # ------------------------------------------------------------------
-    # pygame Group integration
-    # ------------------------------------------------------------------
+    # Pygame Group integration
 
     def update(self, solids=None):
         """Called automatically by pygame Groups each frame.
@@ -94,10 +92,9 @@ class SSprites(sprite.Sprite):
         """
         if solids and hasattr(self, 'apply_physics'):
             self.apply_physics(list(solids))
+            self.pgs._log(f"Physics applied to {type(self).__name__}", "INFO") 
 
-    # ------------------------------------------------------------------
     # Manual helpers (kept for backwards compatibility)
-    # ------------------------------------------------------------------
 
     def draw(self):
         """Draw the sprite to the screen.
@@ -107,6 +104,7 @@ class SSprites(sprite.Sprite):
         but still want to render it.
         """
         self.pgs.screen.blit(self.image, self.rect)
+        self.pgs._log(f"Sprite drawn at position ({self.rect.x}, {self.rect.y})", "INFO")
 
     def move(self, dx, dy):
         """Move the sprite by a relative amount.
@@ -117,6 +115,7 @@ class SSprites(sprite.Sprite):
         """
         self.rect.x += dx
         self.rect.y += dy
+        self.pgs._log(f"Sprite moved by ({dx}, {dy}) to ({self.rect.x}, {self.rect.y})", "INFO")
 
     def remove_from_game(self):
         """Remove this sprite from all groups it belongs to.

@@ -1,170 +1,160 @@
 """
 Alien Invasion Example Game
+============================
+Demonstrates the engine using pygame Groups and LayeredUpdates.
 
-This module demonstrates a complete game using the pygames engine.
-It features a player ship that can shoot at aliens, aliens that drop bombs,
-and a scoring system.
+Bullets and bombs are now registered with game.start() so they are
+drawn and updated automatically each frame. The player is registered
+at LAYER_PLAYER so it always appears in front of the alien grid.
 
-Game Controls:
-    - Left/Right Arrow Keys: Move the player
-    - Space: Shoot bullets
+Controls:
+    Left / Right Arrow  — move the player
+    Space               — shoot
 
-Features:
-    - Player movement and shooting
-    - Alien movement and bomb dropping
-    - Collision detection
+Features demonstrated:
+    - Layered drawing (background < aliens < player < bullets/UI)
+    - Sprites registered with game.start() / game.make_solid()
+    - remove_from_game() / kill() for clean sprite removal
+    - Automatic per-frame update() via Group
     - Score tracking
     - Sound effects
-
-Usage:
-    Run this file directly to play the game:
-    python examples/aliens.py
+    - Garbage collection for off-screen sprites
 """
 
-from pygames.advanced import *
+from pygames.advanced import Player, PhysicSprite, Game
+from pygames.pygames_engine.pygames import *
 from os import path
 import random
 
-# Get the directory path for this file
+# Setup
+
 base_dir = path.dirname(__file__)
-assets = path.join(base_dir, 'assets')
+assets   = path.join(base_dir, 'assets')
+game = Game(500, 500, "Alien Invasion")
+game.start_score_counter()
+game.start_garbage_collector()
+game.enable_logging()
+game.load_image("alien1",     path.join(assets, "alien1.png"))
+game.load_image("alien2",     path.join(assets, "alien2.png"))
+game.load_image("player",     path.join(assets, "player1.gif"))
+game.load_image("background", path.join(assets, "background.gif"))
+game.load_image("bomb",       path.join(assets, "bomb.gif"))
+game.load_sound("boom",       path.join(assets, "boom.wav"))
+game.load_sound("background", path.join(assets, "house_lo.ogg"))
 
-# Create the game instance with 500x500 window
-app = Game(500, 500, "Alien Invasion")
-app.start_score_counter()
-app.start_garbage_collecter()
-app.enable_logging()  # Enable logging to track game events and debug issues
+# Player
 
-# Load all required assets (images and sounds)
-app.load_image("alien1", path.join(assets, "alien1.png"))
-app.load_image("alien2", path.join(assets, "alien2.png"))
-app.load_image("player", path.join(assets, "player1.gif"))
-app.load_image("background", path.join(assets, "background.gif"))
-app.load_sound("boom", path.join(assets, "boom.wav"))
-app.load_image("bomb", path.join(assets, "bomb.gif"))
-app.load_sound("background", path.join(assets, "house_lo.ogg"))
+player = Player(game, 225, 430, width=40, height=50, color="blue", speed=5, jump="up")
+player.image = game.images["player"]
+player.rect  = player.image.get_rect(topleft=(225, 430))
+player.gravity = 0  # Top-down style — no gravity on the player
 
-# Create the player sprite
-player = Player(app, 225, 430, width=40, height=50, color="blue", speed=5, jump="up")
-player.image = app.images["player"]
-player.rect = player.image.get_rect(topleft=(225, 430))
-player.gravity = 0  # Disable gravity for the player (top-down style game)
-app.start(player)
+# Registered at LAYER_PLAYER so it draws in front of aliens and background.
+# update() is called automatically each frame — no need to call player.tick().
+game.start(player, layer=LAYER_PLAYER)
 
-# Initialize game object lists
-bullets = []
-bombs = []
-aliens = []
+# Aliens
 
-# Alien grid configuration
 ALIEN_ROWS = 2
 ALIEN_COLS = 5
-alien_dx = 2  # Horizontal movement speed for aliens
+alien_dx   = 2
 
-# Create the alien grid
+aliens = []
 for row in range(ALIEN_ROWS):
     for col in range(ALIEN_COLS):
-        alien = PhysicSprite(app, 60 + col * 80, 40 + row * 60, width=40, height=40, gravity=0, max_fall_speed=0)
-        alien.image = app.images["alien1"] if row % 2 == 0 else app.images["alien2"]
-        alien.rect = alien.image.get_rect(topleft=(60 + col * 80, 40 + row * 60))
+        x = 60 + col * 80
+        y = 40 + row * 60
+        alien = PhysicSprite(game, x, y, width=40, height=40, gravity=0, max_fall_speed=0)
+        alien.image = game.images["alien1"] if row % 2 == 0 else game.images["alien2"]
+        alien.rect  = alien.image.get_rect(topleft=(x, y))
         aliens.append(alien)
+        # Registered at LAYER_DEFAULT — drawn behind the player.
+        game.start(alien, layer=LAYER_DEFAULT)
 
-# Cooldown timers to prevent excessive shooting/bombing
+# Cooldown state
+
 shoot_cooldown = 0
-bomb_cooldown = 0
+bomb_cooldown  = 0
+
+# Game logic 
 
 def game_logic():
-    """Main game logic function - called each frame to update game state.
-    
-    This function handles:
-    - Background music playback
-    - Background image drawing
-    - Player shooting (space key)
-    - Alien bomb dropping
-    - Bullet movement and collision
-    - Bomb movement and collision
-    - Alien movement and edge bouncing
-    - Player updates
-    """
+    """Called once per frame. Handles bullets, bombs, alien movement,
+    and collision. Drawing and physics are handled by the engine groups."""
     global shoot_cooldown, alien_dx, bomb_cooldown
 
-    # Start background music on first frame
-    if not hasattr(app, 'bg_started'):
-        app.sounds["background"].play(loops=-1)
-        app.bg_started = True
+    # Background music — start once
+    if not hasattr(game, 'bg_started'):
+        game.sounds["background"].play(loops=-1)
+        game.bg_started = True
 
-    # Draw the background image
-    app.img("background", 0, 0, 500, 500)
+    # Draw background image 
+    game.img("background", 0, 0, 500, 500)
 
-    # Handle player shooting
-    if app.check_key_pressed("space") and shoot_cooldown <= 0:
-        bullet = PhysicSprite(app, player.rect.centerx - 4, player.rect.top - 10, width=8, height=16, color="red")
-        bullets.append(bullet)
+    # Player shooting 
+    if game.check_key_pressed("space") and shoot_cooldown <= 0:
+        bullet = PhysicSprite(
+            game, player.rect.centerx - 4, player.rect.top - 10,
+            width=8, height=16, color="red"
+        )
+        # Bullets travel upward under manual control — disable gravity
+        bullet.gravity = 0
+        # Registered above the player layer so they appear on top
+        game.start(bullet, layer=LAYER_UI)
         shoot_cooldown = 20
 
-    # Update shoot cooldown
     if shoot_cooldown > 0:
         shoot_cooldown -= 1
 
-    # Handle alien bomb dropping
+    #  Alien bombs 
     if bomb_cooldown <= 0 and aliens:
-        # Randomly select an alien to drop a bomb
         shooter = random.choice(aliens)
-        bomb = PhysicSprite(app, shooter.rect.centerx - 4, shooter.rect.bottom, width=8, height=16, color="red")
-        bombs.append(bomb)
-        bomb.image = app.images["bomb"]
+        bomb = PhysicSprite(
+            game, shooter.rect.centerx - 4, shooter.rect.bottom,
+            width=8, height=16, color="orange"
+        )
+        bomb.image  = game.images["bomb"]
+        bomb.gravity = 0
+        game.start(bomb, layer=LAYER_DEFAULT)
         bomb_cooldown = 60
 
-    # Update bomb cooldown
     if bomb_cooldown > 0:
         bomb_cooldown -= 1
 
-    # Update bullets - move up and check for collisions with aliens
-    for bullet in bullets[:]:
+    #  Bullet movement and collisions 
+    for bullet in list(game.objects.get_sprites_from_layer(LAYER_UI)):
         bullet.rect.y -= 10
-        app.screen.blit(bullet.image, bullet.rect)
-        if bullet.rect.bottom < 0:
-            bullets.remove(bullet)
-            continue
+        # Collide with aliens
         for alien in aliens[:]:
             if bullet.rect.colliderect(alien.rect):
-                app.play_sound("boom")
-                app.score += 10
+                game.play_sound("boom")
+                game.score += 10
+                alien.remove_from_game()
                 aliens.remove(alien)
-                bullets.remove(bullet)
+                bullet.remove_from_game()
                 break
 
-    # Update bombs - move down and check for collision with player
-    for bomb in bombs[:]:
-        bomb.rect.y += 6
-        app.screen.blit(bomb.image, bomb.rect)
-        if bomb.rect.top > 500:
-            bombs.remove(bomb)
+    #  Bomb movement and player collision 
+    for bomb in list(game.objects.get_sprites_from_layer(LAYER_DEFAULT)):
+        # Only process bombs
+        if bomb in aliens:
             continue
+        bomb.rect.y += 6
         if bomb.rect.colliderect(player.rect):
-            app.score -= 5
-            bombs.remove(bomb)
+            game.score -= 5
+            bomb.remove_from_game()
 
-    # Handle alien movement and edge bouncing
+    #  Alien movement 
     hit_edge = False
     for alien in aliens:
         alien.rect.x += alien_dx
         if alien.rect.right >= 490 or alien.rect.left <= 10:
             hit_edge = True
 
-    # Reverse direction when any alien hits the edge
     if hit_edge:
         alien_dx *= -1
-        # for alien in aliens:
-        #     alien.rect.y += 20
 
-    # Draw all aliens
-    for alien in aliens:
-        app.screen.blit(alien.image, alien.rect)
+# Entry point
 
-    # Update player (handle input)
-    player.tick()
-
-# Start the main game loop
 if __name__ == "__main__":
-    app.mainloop(game_logic)
+    game.mainloop(game_logic)
