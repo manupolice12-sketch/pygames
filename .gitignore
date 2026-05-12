@@ -2,3 +2,4 @@
 .github/
 pycache/
 *.pyc
+pyvenv/
