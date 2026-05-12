@@ -247,7 +247,7 @@ Pass `logging=True` to `Game()` or call `game.enable_logging()` at any time. A `
 
 ## Version
 
-Current release: **v2.6.0**
+Current release: **v2.4.3**
 
 Inspired by [Pygame Zero](https://pygame-zero.readthedocs.io/), built to be more Pythonic, flexible, and extensible.
 
