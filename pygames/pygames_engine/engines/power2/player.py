@@ -9,7 +9,7 @@ Classes:
 
 Usage:
     from pygames_engine.engines.power2.player import Player
-    player = Player(app, x, y)
+    player = Player(pgs, x, y)
 """
 
 from ..power1.physics import PhysicSprite
@@ -18,12 +18,12 @@ from ..power1.physics import PhysicSprite
 class Player(PhysicSprite):
     """A player character with keyboard movement and jump controls."""
 
-    def __init__(self, app, x, y, width=40, height=60, color="blue", speed=5,
+    def __init__(self, pgs, x, y, width=40, height=60, color="blue", speed=5,
                  left="left", right="right", jump="space"):
         """Initialize a player character.
 
         Args:
-            app: The Game instance
+            pgs: The Game instance
             x: Initial X position
             y: Initial Y position
             width: Width in pixels (default: 40)
@@ -38,17 +38,17 @@ class Player(PhysicSprite):
             TypeError: If speed is not a number
             ValueError: If speed is negative
         """
-        super().__init__(app, x, y, width, height, color)
+        super().__init__(pgs, x, y, width, height, color)
 
         if not isinstance(speed, (int, float)):
-            app._log(
+            pgs._log(
                 f"TypeError: Player speed must be a number (got {type(speed).__name__})",
                 "ERROR"
             )
             raise TypeError(f"speed must be a number, got {type(speed).__name__}")
 
         if speed < 0:
-            app._log(f"ValueError: Player speed must be positive (got {speed})", "ERROR")
+            pgs._log(f"ValueError: Player speed must be positive (got {speed})", "ERROR")
             raise ValueError(f"speed must be positive, got {speed}")
 
         self.speed = speed
@@ -56,14 +56,16 @@ class Player(PhysicSprite):
         self.key_right = right
         self.key_jump = jump
 
-        app._log(f"Player initialized at ({x}, {y}) with speed {speed}", "SUCCESS")
+        pgs._log(f"Player initialized at ({x}, {y}), speed={speed}, keys=({left}, {right}, {jump})", "SUCCESS")
 
     def handle_input(self):
         """Process keyboard input for movement and jumping."""
         if self.pgs.check_key_pressed(self.key_left):
             self.vel_x = -self.speed
+            self.pgs._log(f"Player moving left: vel_x={self.vel_x}", "INFO")
         elif self.pgs.check_key_pressed(self.key_right):
             self.vel_x = self.speed
+            self.pgs._log(f"Player moving right: vel_x={self.vel_x}", "INFO")
         else:
             self.vel_x = 0
 
@@ -73,22 +75,14 @@ class Player(PhysicSprite):
     def update(self, solids=None):
         """Called automatically by pygame Groups each frame.
 
-        Processes input first, then applies physics. This means you no longer
-        need to call player.tick() manually — it is handled by the group.
-        tick() is kept as an alias for backwards compatibility.
-
         Args:
             solids: Iterable of solid sprites (passed from Game.start_loop()).
         """
         self.handle_input()
         self.apply_physics(list(solids) if solids else [])
+        self.pgs._log(f"Player updated at ({self.rect.x}, {self.rect.y})", "INFO")
 
     def tick(self):
-        """Process input and update physics for this frame.
-
-        Kept for backwards compatibility. When the player is registered with
-        game.start(), update() is called automatically and tick() is not
-        needed. Only call tick() manually if you are managing the player
-        outside of the engine loop.
-        """
+        """Deprecated manual update. Use game.start() and let update() be called automatically."""
+        self.pgs._log("tick() called manually — consider using game.start() instead", "INFO")
         self.handle_input()

@@ -9,7 +9,7 @@ Classes:
 
 Usage:
     from pygames_engine.engines.power1.physics import PhysicSprite
-    sprite = PhysicSprite(app, x, y, width, height, color="red")
+    sprite = PhysicSprite(pgs, x, y, width, height, color="red")
 """
 
 try:
@@ -23,15 +23,14 @@ from ...utils.object_manager import SSprites
 
 
 class PhysicSprite(SSprites):
-    """A sprite that incorporates basic physics: gravity, velocity, and
-    collision detection against solid objects."""
+    """A sprite with gravity, velocity, and collision detection against solid objects."""
 
-    def __init__(self, app, x, y, width=50, height=50, color="red",
+    def __init__(self, pgs, x, y, width=50, height=50, color="red",
                  gravity=0.8, max_fall_speed=20, **kwargs):
         """Initialize a physics-enabled sprite.
 
         Args:
-            app: The Game instance
+            pgs: The Game instance
             x: Initial X position
             y: Initial Y position
             width: Width of the sprite in pixels (default: 50)
@@ -40,10 +39,10 @@ class PhysicSprite(SSprites):
             gravity: Gravity acceleration per frame (default: 0.8)
             max_fall_speed: Terminal velocity cap (default: 20)
         """
-        super().__init__(app, x, y)
+        super().__init__(pgs, x, y)
 
         if not isinstance(width, (int, float)) or not isinstance(height, (int, float)):
-            app._log(
+            pgs._log(
                 f"TypeError: Width/Height must be numbers "
                 f"(got {type(width).__name__})", "ERROR"
             )
@@ -52,27 +51,25 @@ class PhysicSprite(SSprites):
                 f"got width={type(width).__name__}, height={type(height).__name__}"
             )
 
-        self.image = app.create_surface(width, height, color=color)
+        self.image = pgs.create_surface(width, height, color=color)
         self.rect = self.image.get_rect(topleft=(x, y))
 
         self.vel_y = 0.0
         self.vel_x = 0.0
-
         self.gravity = gravity
         self.max_fall_speed = max_fall_speed
         self.on_ground = False
 
-        app._log(f"PhysicSprite created at ({x}, {y}) with gravity {gravity}", "SUCCESS")
+        pgs._log(f"PhysicSprite created at ({x}, {y}), size={width}x{height}, gravity={gravity}", "SUCCESS")
 
     def update(self, solids=None):
         """Called automatically by pygame Groups each frame.
-
-        Applies physics against the provided solids.
 
         Args:
             solids: Iterable of solid sprites (passed from Game.start_loop()).
         """
         self.apply_physics(list(solids) if solids else [])
+        self.pgs._log(f"PhysicSprite updated at ({self.rect.x}, {self.rect.y})", "INFO")
 
     def apply_physics(self, solids=None, gravity=True):
         """Apply one frame of physics: gravity, velocity, and collision resolution.
@@ -87,11 +84,10 @@ class PhysicSprite(SSprites):
         if solids is None:
             solids = []
 
-        # --- Gravity ---
         if gravity:
             self.vel_y = min(self.vel_y + self.gravity, self.max_fall_speed)
+            self.pgs._log(f"Gravity applied: vel_y={self.vel_y:.2f}", "INFO")
 
-        # --- Vertical pass ---
         self.rect.y += int(self.vel_y)
         self.on_ground = False
 
@@ -103,17 +99,18 @@ class PhysicSprite(SSprites):
                     self.rect.bottom = solid.rect.top
                     self.vel_y = 0.0
                     self.on_ground = True
+                    self.pgs._log(f"Vertical collision (landing) with {type(solid).__name__}", "INFO")
                 elif self.vel_y < 0:
                     self.rect.top = solid.rect.bottom
                     self.vel_y = 0.0
+                    self.pgs._log(f"Vertical collision (ceiling) with {type(solid).__name__}", "INFO")
 
-        # --- Screen floor ---
         if self.rect.bottom >= self.pgs.screen_height:
             self.rect.bottom = self.pgs.screen_height
             self.vel_y = 0.0
             self.on_ground = True
+            self.pgs._log("Sprite hit screen floor", "INFO")
 
-        # --- Horizontal pass ---
         self.rect.x += int(self.vel_x)
 
         for solid in solids:
@@ -122,8 +119,10 @@ class PhysicSprite(SSprites):
             if self.rect.colliderect(solid.rect):
                 if self.vel_x > 0:
                     self.rect.right = solid.rect.left
+                    self.pgs._log(f"Horizontal collision (right) with {type(solid).__name__}", "INFO")
                 elif self.vel_x < 0:
                     self.rect.left = solid.rect.right
+                    self.pgs._log(f"Horizontal collision (left) with {type(solid).__name__}", "INFO")
 
     def jump(self, force=15):
         """Make the sprite jump (only when on the ground).
@@ -136,7 +135,7 @@ class PhysicSprite(SSprites):
         """
         if not isinstance(force, (int, float)):
             self.pgs._log(
-                f"Jump Error: Force must be a number (got {type(force).__name__})",
+                f"Jump error: force must be a number (got {type(force).__name__})",
                 "ERROR"
             )
             raise TypeError(f"jump force must be a number, got {type(force).__name__}")
@@ -146,4 +145,4 @@ class PhysicSprite(SSprites):
             self.on_ground = False
             self.pgs._log(f"Jump executed with force: {force}", "SUCCESS")
         else:
-            self.pgs._log("Jump ignored: Sprite not on ground", "INFO")
+            self.pgs._log("Jump ignored: sprite not on ground", "INFO")

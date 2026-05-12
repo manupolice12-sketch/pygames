@@ -27,10 +27,8 @@ class Animator:
             target: The sprite to animate (must have 'image'; optionally
                     'state' and 'animations').
             animation_speed: Milliseconds between frame updates (default: 100).
-                             A value of 100 means ~10 fps for animations.
         """
         self.target = target
-        # animation_speed is in milliseconds (matches pg.time.get_ticks units).
         self.animation_speed = animation_speed
         self.current_frame = 0
         self.last_update_time = pg.time.get_ticks()
@@ -58,10 +56,14 @@ class Animator:
                 self.target.pgs._log(f"Animation state changed to: {state}", "INFO")
 
         if state is None or not hasattr(self.target, 'animations'):
+            if hasattr(self.target, 'pgs'):
+                self.target.pgs._log("Animation skipped: no state or animations defined", "INFO")
             return
 
         frames = self.target.animations.get(state)
         if not frames:
+            if hasattr(self.target, 'pgs'):
+                self.target.pgs._log(f"Animation skipped: no frames found for state '{state}'", "INFO")
             return
 
         current_time = pg.time.get_ticks()
@@ -69,12 +71,16 @@ class Animator:
             self.current_frame = (self.current_frame + 1) % len(frames)
             self.target.image = frames[self.current_frame]
             self.last_update_time = current_time
+            if hasattr(self.target, 'pgs'):
+                self.target.pgs._log(
+                    f"Animation frame advanced: state='{state}', frame={self.current_frame}", "INFO"
+                )
 
     def hover(self, amplitude=5, speed=0.005):
         """Apply a smooth sine-wave hover effect to the sprite.
 
-        Note: This modifies rect.y directly. Do not use on sprites that also
-        have apply_physics running, as the two will conflict.
+        Do not use on sprites that also have apply_physics running,
+        as the two will conflict.
 
         Args:
             amplitude: Maximum vertical displacement in pixels (default: 5).
@@ -83,16 +89,22 @@ class Animator:
         self.target.rect.y = int(
             self.base_y + math.sin(pg.time.get_ticks() * speed) * amplitude
         )
+        if hasattr(self.target, 'pgs'):
+            self.target.pgs._log(
+                f"Hover applied: rect.y={self.target.rect.y}, amplitude={amplitude}, speed={speed}",
+                "INFO"
+            )
 
     def rotate_loop(self, speed=0.1):
         """Continuously rotate the sprite around its centre.
 
         Args:
-            speed: Degrees per millisecond (default: 0.1 ≈ one full rotation
-                   every ~3.6 seconds).
+            speed: Degrees per millisecond (default: 0.1).
         """
         angle = (pg.time.get_ticks() * speed) % 360
         rotated = pg.transform.rotate(self.base_image, angle)
         center = self.target.rect.center
         self.target.image = rotated
         self.target.rect = rotated.get_rect(center=center)
+        if hasattr(self.target, 'pgs'):
+            self.target.pgs._log(f"Rotation applied: angle={angle:.1f}°", "INFO")

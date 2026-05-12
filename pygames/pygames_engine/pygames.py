@@ -24,19 +24,16 @@ import sys
 import os
 from datetime import datetime
 
-import pygame
-from pygame import (
-    display, event, font, image, key, mixer, time, transform,
-    Surface, QUIT, SRCALPHA,
-    K_SPACE, K_ESCAPE, K_UP, K_DOWN, K_LEFT, K_RIGHT,
-    K_RETURN, K_LSHIFT, K_LCTRL, K_TAB, K_BACKSPACE,
-    init, quit as pg_quit,
-    sprite as sprite_module,
-)
+try:
+    import pygame as pg
+except ImportError:
+    raise ImportError(
+        "pygame or pygame-ce is required. "
+        "Install it with: pip install pygame-ce"
+    )
 
-from .engines.power1.physics import PhysicSprite  # Optional physics integration
+from .engines.power1.physics import PhysicSprite
 
-# Default layer constants
 LAYER_BACKGROUND = 0
 LAYER_DEFAULT    = 1
 LAYER_PLAYER     = 2
@@ -45,9 +42,10 @@ LAYER_UI         = 3
 
 class Game:
     """Main class for the Pygame-S engine."""
-    
+
     def __init__(self, w=800, h=600, title="Pygame-S", icon_path=None, logging=False):
         """Initialize the game engine.
+
         Args:
             w: Screen width in pixels (default: 800)
             h: Screen height in pixels (default: 600)
@@ -55,18 +53,18 @@ class Game:
             icon_path: Optional path to icon image file
             logging: Enable logging to logs.txt (default: False)
         """
-        init()
-        font.init()
+        pg.init()
+        pg.font.init()
         self.screen_width = w
         self.screen_height = h
-        self.screen = display.set_mode((w, h))
+        self.screen = pg.display.set_mode((w, h))
         self.logging_enabled = logging
         self._SPECIAL_KEYS = {
-        "space": K_SPACE, "esc": K_ESCAPE, "up": K_UP, "down": K_DOWN,
-        "left": K_LEFT, "right": K_RIGHT, "enter": K_RETURN,
-        "shift": K_LSHIFT, "ctrl": K_LCTRL, "tab": K_TAB,
-        "backspace": K_BACKSPACE,
-    }
+            "space": pg.K_SPACE, "esc": pg.K_ESCAPE, "up": pg.K_UP, "down": pg.K_DOWN,
+            "left": pg.K_LEFT, "right": pg.K_RIGHT, "enter": pg.K_RETURN,
+            "shift": pg.K_LSHIFT, "ctrl": pg.K_LCTRL, "tab": pg.K_TAB,
+            "backspace": pg.K_BACKSPACE,
+        }
         main_module = sys.modules.get('__main__')
         if main_module and hasattr(main_module, '__file__'):
             base_dir = os.path.dirname(os.path.abspath(main_module.__file__))
@@ -78,13 +76,12 @@ class Game:
         if icon_path:
             self.set_icon(icon_path)
 
-        self.clock = time.Clock()
-        self.font = font.SysFont("Arial", 30)
+        self.clock = pg.time.Clock()
+        self.font = pg.font.SysFont("Arial", 30)
         self.sounds = {}
         self.images = {}
-        # LayeredUpdates is a Group that also tracks draw order via layers.
-        self.objects = sprite_module.LayeredUpdates()
-        self.solids = sprite_module.Group()
+        self.objects = pg.sprite.LayeredUpdates()
+        self.solids = pg.sprite.Group()
         self.score = 0
         self.score_active = False
         self.garbage_collection = False
@@ -93,9 +90,7 @@ class Game:
         self._key_state = None
         self._log(f"Game engine initialized: {w}x{h}", "SUCCESS")
 
-    # Logging
-
-    def _log(self, message, status="INFO"):
+    def _log(self, message, status):
         """Write a timestamped entry to the log file (if logging is on)."""
         if not self.logging_enabled:
             return
@@ -141,28 +136,24 @@ class Game:
         self._log("Logging system disabled manually", "INFO")
         self.logging_enabled = False
 
-    # Window management
-
     def set_title(self, title):
         """Set the window title."""
-        display.set_caption(str(title))
-        self._log(f"Window title changed to: {title}", "INFO")
+        pg.display.set_caption(str(title))
+        self._log(f"Window title set to: {title}", "INFO")
 
     def set_icon(self, path):
         """Set the window icon."""
         try:
-            display.set_icon(image.load(path))
+            pg.display.set_icon(pg.image.load(path))
             self._log(f"Window icon loaded: {path}", "SUCCESS")
         except FileNotFoundError:
             self._log(f"Failed to load icon: {path}", "ERROR")
             raise FileNotFoundError(f"The file '{path}' does not exist, check the file.")
 
-    # Asset loading
-
     def load_image(self, name, path):
         """Load an image and store it under name."""
         try:
-            self.images[name] = image.load(path).convert_alpha()
+            self.images[name] = pg.image.load(path).convert_alpha()
             self._log(f"Image '{name}' loaded from: {path}", "SUCCESS")
         except FileNotFoundError:
             self._log(f"Image load error: {path}", "ERROR")
@@ -182,16 +173,18 @@ class Game:
         if w is not None and h is not None and (w, h) != src.get_size():
             cache_key = f"_scaled_{name}_{w}_{h}"
             if cache_key not in self.images:
-                self.images[cache_key] = transform.scale(src, (w, h))
+                self.images[cache_key] = pg.transform.scale(src, (w, h))
+                self._log(f"Image '{name}' scaled and cached at {w}x{h}", "INFO")
             src = self.images[cache_key]
 
         self.screen.blit(src, (x, y))
+        self._log(f"Image '{name}' drawn at ({x}, {y})", "INFO")
 
     def load_sound(self, name, path):
         """Load a sound and store it under name."""
         try:
-            mixer.init()
-            self.sounds[name] = mixer.Sound(path)
+            pg.mixer.init()
+            self.sounds[name] = pg.mixer.Sound(path)
             self._log(f"Sound '{name}' loaded from: {path}", "SUCCESS")
         except FileNotFoundError:
             self._log(f"Sound load error: {path}", "ERROR")
@@ -206,8 +199,6 @@ class Game:
             self._log(f"Sound '{name}' not found", "ERROR")
             raise NameError(f"Sound '{name}' not found.")
 
-    # Score
-
     def start_score_counter(self):
         """Enable the automatic score display each frame."""
         self.score_active = True
@@ -217,14 +208,13 @@ class Game:
         """Manually display the score at a given position."""
         score_surf = self.font.render(f"Score: {self.score}", True, color)
         self.screen.blit(score_surf, (x, y))
-
-    # Object management
+        self._log(f"Score ({self.score}) displayed at ({x}, {y})", "INFO")
 
     def start(self, *objects, layer=LAYER_DEFAULT):
         """Add sprites to the game loop at the given draw layer.
 
         Args:
-            *objects: One or more SSprites (or subclass) instances.
+            *objects: One or more sprite instances.
             layer: Draw layer (default: LAYER_DEFAULT = 1).
                    Lower numbers are drawn first (further back).
                    Use the LAYER_* constants or any integer.
@@ -237,9 +227,9 @@ class Game:
         for item in objects:
             if not self.objects.has(item):
                 self.objects.add(item, layer=layer)
-                self._log(
-                    f"Added {type(item).__name__} to layer {layer}", "SUCCESS"
-                )
+                self._log(f"Added {type(item).__name__} to layer {layer}", "SUCCESS")
+            else:
+                self._log(f"{type(item).__name__} already in game loop, skipping", "INFO")
 
     def make_solid(self, *objects, layer=LAYER_DEFAULT):
         """Mark sprites as solid for physics collision and add to the game loop.
@@ -252,7 +242,7 @@ class Game:
             self.solids.add(item)
             if not self.objects.has(item):
                 self.objects.add(item, layer=layer)
-            self._log(f"Marked {type(item).__name__} as solid", "SUCCESS")
+            self._log(f"Marked {type(item).__name__} as solid on layer {layer}", "SUCCESS")
 
     def set_layer(self, obj, layer):
         """Move a sprite to a different draw layer.
@@ -264,18 +254,20 @@ class Game:
         if self.objects.has(obj):
             self.objects.change_layer(obj, layer)
             self._log(f"{type(obj).__name__} moved to layer {layer}", "INFO")
+        else:
+            self._log(f"{type(obj).__name__} not found in game loop, cannot set layer", "ERROR")
 
     def get_layer(self, obj):
-        """Return the current draw layer of a sprite.
+        """Return the current draw layer of a sprite, or None if not in the game.
 
         Args:
             obj: The sprite to query.
-
-        Returns:
-            Integer layer number, or None if the sprite is not in the game.
         """
         if self.objects.has(obj):
-            return self.objects.get_layer_of_sprite(obj)
+            layer = self.objects.get_layer_of_sprite(obj)
+            self._log(f"{type(obj).__name__} is on layer {layer}", "INFO")
+            return layer
+        self._log(f"{type(obj).__name__} not found in game loop", "ERROR")
         return None
 
     def get_sprites_in_layer(self, layer):
@@ -283,11 +275,10 @@ class Game:
 
         Args:
             layer: The layer number to query.
-
-        Returns:
-            List of sprites in that layer.
         """
-        return self.objects.get_sprites_from_layer(layer)
+        sprites = self.objects.get_sprites_from_layer(layer)
+        self._log(f"Layer {layer} contains {len(sprites)} sprite(s)", "INFO")
+        return sprites
 
     def start_garbage_collector(self):
         """Enable automatic removal of off-screen objects."""
@@ -296,14 +287,11 @@ class Game:
 
     def start_garbage_collecter(self):
         """Deprecated alias for start_garbage_collector()."""
+        self._log("start_garbage_collecter() is deprecated, use start_garbage_collector()", "INFO")
         self.start_garbage_collector()
 
     def clean_up(self):
-        """Remove sprites that have moved too far off-screen.
-
-        Uses sprite.kill() which removes the sprite from every group it
-        belongs to — no manual sync between objects and solids needed.
-        """
+        """Remove sprites that have moved too far off-screen."""
         if not self.garbage_collection:
             return
         margin = 150
@@ -313,29 +301,32 @@ class Game:
                     and o.rect.bottom > -margin and o.rect.top < self.screen_height + margin)
         ]
         for o in to_remove:
-            o.kill()  # Removes from self.objects, self.solids, and any other group
+            o.kill()
         if to_remove:
-            self._log(f"Garbage collector removed {len(to_remove)} objects", "INFO")
+            self._log(f"Garbage collector removed {len(to_remove)} object(s)", "INFO")
 
     def create_surface(self, width, height, color=None, alpha=None):
         """Create a new pygame Surface."""
         if alpha:
-            surface = Surface((width, height), SRCALPHA).convert_alpha()
+            surface = pg.Surface((width, height), pg.SRCALPHA).convert_alpha()
+            self._log(f"Alpha surface created: {width}x{height}", "SUCCESS")
         else:
-            surface = Surface((width, height)).convert_alpha()
+            surface = pg.Surface((width, height)).convert_alpha()
             if color:
                 try:
                     surface.fill(color)
+                    self._log(f"Surface created: {width}x{height}, color={color}", "SUCCESS")
                 except (ValueError, TypeError):
                     self._log(f"Invalid color: {color}", "ERROR")
                     raise NameError(f"The color '{color}' does not exist.")
+            else:
+                self._log(f"Surface created: {width}x{height}", "SUCCESS")
         return surface
 
     def background(self, color):
         """Fill the entire screen with a color."""
         self.screen.fill(color)
-
-    # Input
+        self._log(f"Background filled with color: {color}", "INFO")
 
     def check_key_pressed(self, name):
         """Check if a specific key is held down.
@@ -344,60 +335,55 @@ class Game:
         calling this multiple times per frame never queries the hardware twice.
         """
         if self._key_state is None:
-            self._key_state = key.get_pressed()
+            self._key_state = pg.key.get_pressed()
         name = name.lower()
         if name in self._SPECIAL_KEYS:
-            return self._key_state[self._SPECIAL_KEYS[name]]
-        key_const = getattr(pygame, f"K_{name.upper()}", None)
-        return bool(self._key_state[key_const]) if key_const is not None else False
-
-    # Screen helpers
+            pressed = bool(self._key_state[self._SPECIAL_KEYS[name]])
+        else:
+            key_const = getattr(pg, f"K_{name.upper()}", None)
+            if key_const is None:
+                self._log(f"Unknown key name: '{name}'", "ERROR")
+                return False
+            pressed = bool(self._key_state[key_const])
+        self._log(f"Key '{name}' pressed: {pressed}", "INFO")
+        return pressed
 
     def zoom(self, factor):
         """Scale the screen resolution by factor."""
         self.screen_width = int(self.screen_width * factor)
         self.screen_height = int(self.screen_height * factor)
-        self.screen = display.set_mode((self.screen_width, self.screen_height))
-        self._log(f"Zoom applied: factor {factor}", "INFO")
+        self.screen = pg.display.set_mode((self.screen_width, self.screen_height))
+        self._log(f"Zoom applied: factor={factor}, new size={self.screen_width}x{self.screen_height}", "INFO")
 
     def set_speed(self, fps):
         """Set the target frames per second."""
         self.fps = fps
+        self._log(f"FPS set to: {fps}", "INFO")
 
     def update_screen(self):
         """Flip the display buffer and tick the clock."""
-        display.flip()
+        pg.display.flip()
         self.clock.tick(self.fps)
+        self._log(f"Frame updated at {self.clock.get_fps():.2f} FPS", "INFO")
 
     def process_events(self):
         """Handle system events and refresh the per-frame key state cache."""
-        self._key_state = key.get_pressed()
-        for e in event.get():
-            if e.type == QUIT:
+        self._key_state = pg.key.get_pressed()
+        for e in pg.event.get():
+            if e.type == pg.QUIT:
                 self.is_running = False
+                self._log("Quit event received, exiting main loop", "INFO")
         return self.is_running
 
-    # Main loop
-
     def start_loop(self):
-        """Update all sprites and draw them in layer order.
-
-        Group.update(solids) passes the solid sprite list into every sprite's
-        update() method. Group.draw() then blits all sprites onto the screen
-        in layer order (lowest layer number drawn first).
-        """
+        """Update all sprites and draw them in layer order."""
         self.clean_up()
-
-        # Pass solids group into each sprite's update() so physics sprites
-        # can resolve collisions without needing a direct Game reference.
         self.objects.update(self.solids)
-
-        # LayeredUpdates.draw() respects layer order automatically.
         self.objects.draw(self.screen)
-
         if self.score_active:
             text_surface = self.font.render(f"Score: {self.score}", True, "white")
             self.screen.blit(text_surface, (10, 10))
+        self._log("Sprites updated and drawn", "INFO")
 
     def mainloop(self, game_logic):
         """Start the main game loop.
@@ -411,5 +397,7 @@ class Game:
             game_logic()
             self.start_loop()
             self.update_screen()
-        pg_quit()
+        self._log("Mainloop ended", "SUCCESS")
+        pg.quit()
+        self._log("Ending game engine session", "INFO")
         sys.exit()
